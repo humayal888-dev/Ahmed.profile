@@ -4,681 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Muhammad Humayal - Web Developer Portfolio</title>
+    
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #121316;
-            --surface-color: #1a1c23;
-            --surface-hover: #242731;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --electric-blue: #00d2ff;
-            --vibrant-orange: #ff6b00;
-            --accent-glow-blue: rgba(0, 210, 255, 0.25);
-            --accent-glow-orange: rgba(255, 107, 0, 0.25);
-            --border-color: #2e323e;
-            --card-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6);
-            --font-main: 'Inter', sans-serif;
-            --font-heading: 'Space Grotesk', sans-serif;
-            --font-mono: 'Fira Code', monospace;
-            --transition-speed: 0.3s;
-        }
-
-        /* Monochromatic Light Mode Theme Override */
-        [data-theme="light"] {
-            --bg-color: #f1f5f9;
-            --surface-color: #ffffff;
-            --surface-hover: #e2e8f0;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --electric-blue: #0284c7;
-            --vibrant-orange: #ea580c;
-            --accent-glow-blue: rgba(2, 132, 199, 0.15);
-            --accent-glow-orange: rgba(234, 88, 12, 0.15);
-            --border-color: #cbd5e1;
-            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
-        }
-
-        /* Cyberpunk Neon Palette Preset */
-        [data-theme="cyberpunk"] {
-            --bg-color: #0d0221;
-            --surface-color: #190a38;
-            --surface-hover: #2a1254;
-            --text-primary: #00f6ff;
-            --text-secondary: #e2afff;
-            --electric-blue: #ff007f;
-            --vibrant-orange: #00f6ff;
-            --accent-glow-blue: rgba(255, 0, 127, 0.3);
-            --accent-glow-orange: rgba(0, 246, 255, 0.3);
-            --border-color: #ff007f;
-            --card-shadow: 0 15px 35px -10px rgba(255, 0, 127, 0.3);
-        }
-
-        /* Emerald Gold Palette Preset */
-        [data-theme="emerald"] {
-            --bg-color: #061e14;
-            --surface-color: #0b2e1f;
-            --surface-hover: #13422e;
-            --text-primary: #e8f5e9;
-            --text-secondary: #a3e635;
-            --electric-blue: #10b981;
-            --vibrant-orange: #f59e0b;
-            --accent-glow-blue: rgba(16, 185, 129, 0.3);
-            --accent-glow-orange: rgba(245, 158, 11, 0.3);
-            --border-color: #10b981;
-            --card-shadow: 0 15px 35px -10px rgba(16, 185, 129, 0.2);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-family: var(--font-main);
-            line-height: 1.6;
-            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* Soft Animated Ambient Background Blobs */
-        .ambient-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -1;
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(90px);
-            opacity: 0.35;
-            animation: floatBlob 18s ease-in-out infinite alternate;
-        }
-
-        .blob-1 {
-            width: 450px;
-            height: 450px;
-            background: var(--electric-blue);
-            top: -100px;
-            left: -100px;
-        }
-
-        .blob-2 {
-            width: 500px;
-            height: 500px;
-            background: var(--vibrant-orange);
-            bottom: -150px;
-            right: -100px;
-            animation-delay: -9s;
-        }
-
-        @keyframes floatBlob {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(80px, 60px) scale(1.1); }
-            100% { transform: translate(-40px, 100px) scale(0.95); }
-        }
-
-        /* Navigation Header */
-        header {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background-color: rgba(26, 28, 35, 0.85);
-            border-bottom: 1px solid var(--border-color);
-            backdrop-filter: blur(12px);
-        }
-
-        [data-theme="light"] header {
-            background-color: rgba(255, 255, 255, 0.85);
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.2rem 2rem;
-        }
-
-        .logo {
-            font-family: var(--font-heading);
-            font-weight: 700;
-            font-size: 1.4rem;
-            color: var(--text-primary);
-            letter-spacing: -0.5px;
-        }
-
-        .logo span.blue { color: var(--electric-blue); }
-        .logo span.orange { color: var(--vibrant-orange); }
-
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 0.5rem;
-        }
-
-        .nav-btn {
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--text-secondary);
-            padding: 0.5rem 1rem;
-            font-size: 0.95rem;
-            font-weight: 500;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all var(--transition-speed) ease;
-        }
-
-        .nav-btn:hover {
-            color: var(--text-primary);
-            background-color: var(--surface-hover);
-        }
-
-        .nav-btn.active {
-            color: var(--electric-blue);
-            background-color: var(--accent-glow-blue);
-            border-color: var(--electric-blue);
-        }
-
-        .controls-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .theme-toggle {
-            background: var(--surface-hover);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 0.5rem 0.9rem;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            transition: all var(--transition-speed) ease;
-        }
-
-        .theme-toggle:hover {
-            border-color: var(--vibrant-orange);
-            box-shadow: 0 0 12px var(--accent-glow-orange);
-        }
-
-        /* Layout Main */
-        main {
-            flex: 1;
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 2.5rem 2rem;
-        }
-
-        .page-view {
-            display: none;
-            opacity: 0;
-            transform: translateY(12px);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-
-        .page-view.active {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Hero Section */
-        .hero {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            align-items: center;
-            padding: 3rem 0;
-        }
-
-        .hero-content h1 {
-            font-family: var(--font-heading);
-            font-size: 3.2rem;
-            line-height: 1.1;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .hero-content .subtitle {
-            font-size: 1.25rem;
-            color: var(--electric-blue);
-            font-weight: 600;
-            margin-bottom: 1.2rem;
-            display: block;
-        }
-
-        .hero-content p {
-            font-size: 1.05rem;
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            max-width: 500px;
-        }
-
-        .hero-image-wrapper {
-            position: relative;
-            display: flex;
-            justify-content: center;
-        }
-
-        .hero-headshot {
-            width: 320px;
-            height: 320px;
-            object-fit: cover;
-            border-radius: 20px;
-            border: 2px solid var(--electric-blue);
-            box-shadow: 0 0 30px var(--accent-glow-blue), 0 0 15px var(--accent-glow-orange);
-            transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
-        }
-
-        .hero-headshot:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 45px var(--accent-glow-orange), 0 0 25px var(--accent-glow-blue);
-        }
-
-        /* Buttons */
-        .cta-btn {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--electric-blue), var(--vibrant-orange));
-            color: #ffffff;
-            font-weight: 700;
-            padding: 0.85rem 2rem;
-            border-radius: 8px;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 20px var(--accent-glow-orange);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .cta-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px var(--accent-glow-blue);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            border: 1px solid var(--electric-blue);
-            color: var(--electric-blue);
-            padding: 0.75rem 1.8rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-secondary:hover {
-            background: var(--accent-glow-blue);
-            color: var(--text-primary);
-        }
-
-        /* Featured Work Gallery */
-        .section-header {
-            margin: 3.5rem 0 1.5rem 0;
-        }
-
-        .section-header h2 {
-            font-family: var(--font-heading);
-            font-size: 2.2rem;
-        }
-
-        .section-header p {
-            color: var(--text-secondary);
-        }
-
-        .portfolio-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .portfolio-item {
-            background: var(--surface-color);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            transition: border-color var(--transition-speed), transform var(--transition-speed);
-        }
-
-        .portfolio-item:hover {
-            border-color: var(--vibrant-orange);
-            transform: translateY(-4px);
-        }
-
-        .thumb-container {
-            width: 100%;
-            height: 200px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .thumb-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-
-        .portfolio-item:hover .thumb-container img {
-            transform: scale(1.08);
-        }
-
-        .portfolio-info {
-            padding: 1.2rem;
-        }
-
-        .portfolio-info h3 {
-            font-size: 1.2rem;
-            margin-bottom: 0.4rem;
-        }
-
-        .portfolio-info p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .gallery-footer {
-            text-align: center;
-            margin-top: 2rem;
-        }
-
-        /* Testimonials Section */
-        .testimonials-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .testimonial-card {
-            background: var(--surface-color);
-            padding: 1.8rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            position: relative;
-        }
-
-        .testimonial-card p {
-            font-style: italic;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
-        }
-
-        .client-info h4 {
-            color: var(--electric-blue);
-            font-size: 1rem;
-        }
-
-        .client-info span {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
-
-        /* Client Logos */
-        .brands-grid {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 2rem;
-            padding: 2.5rem 0;
-            opacity: 0.75;
-        }
-
-        .brand-logo {
-            font-family: var(--font-heading);
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-            padding: 0.6rem 1.5rem;
-            border-radius: 8px;
-            background: var(--surface-color);
-        }
-
-        /* Cards & Grids */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .card {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            padding: 1.8rem;
-            border-radius: 12px;
-            box-shadow: var(--card-shadow);
-            transition: border-color var(--transition-speed), transform var(--transition-speed);
-        }
-
-        .card:hover {
-            border-color: var(--electric-blue);
-            transform: translateY(-3px);
-        }
-
-        .card h3 {
-            margin-bottom: 0.8rem;
-            font-size: 1.25rem;
-            color: var(--text-primary);
-        }
-
-        .card p {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-        }
-
-        /* Timeline Layout for Journey */
-        .timeline {
-            position: relative;
-            margin: 2rem 0;
-            padding-left: 2rem;
-            border-left: 3px solid var(--electric-blue);
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 2.5rem;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -2.6rem;
-            top: 0.2rem;
-            width: 1rem;
-            height: 1rem;
-            border-radius: 50%;
-            background: var(--vibrant-orange);
-            border: 3px solid var(--bg-color);
-            box-shadow: 0 0 10px var(--vibrant-orange);
-        }
-
-        .timeline-date {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--electric-blue);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.3rem;
-        }
-
-        /* Punchy Metric Stat Badge for Interactive Cards */
-        .stat-badge-overlay {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: var(--electric-blue);
-            margin-bottom: 0.3rem;
-            font-family: var(--font-heading);
-        }
-
-        /* Detailed Page Specifics */
-        .detailed-header {
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .detailed-header h2 {
-            font-family: var(--font-heading);
-            font-size: 2.5rem;
-            color: var(--electric-blue);
-        }
-
-        .spec-list {
-            list-style: none;
-            margin-top: 1rem;
-        }
-
-        .spec-list li {
-            padding: 0.6rem 0;
-            border-bottom: 1px dashed var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            color: var(--text-secondary);
-        }
-
-        .spec-list li span.val {
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        /* Progress Bars & Stats */
-        .stat-group {
-            margin-bottom: 1.4rem;
-        }
-
-        .stat-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 10px;
-            background-color: var(--surface-hover);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--electric-blue), var(--vibrant-orange));
-            border-radius: 6px;
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .tag-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        .tag {
-            background-color: var(--accent-glow-blue);
-            color: var(--electric-blue);
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            border: 1px solid rgba(0, 210, 255, 0.2);
-        }
-
-        .achievement-card {
-            border-left: 4px solid var(--vibrant-orange);
-        }
-
-        /* Typography Customizing Controls */
-        .font-selector {
-            margin-top: 1.5rem;
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .font-btn {
-            background: var(--surface-hover);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all var(--transition-speed);
-        }
-
-        .font-btn:hover {
-            border-color: var(--electric-blue);
-        }
-
-        footer {
-            border-top: 1px solid var(--border-color);
-            padding: 2rem;
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-top: auto;
-            background: var(--surface-color);
-        }
-
-        @media (max-width: 868px) {
-            .hero {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-            .hero-content p {
-                margin: 0 auto 2rem auto;
-            }
-            .hero-image-wrapper {
-                order: -1;
-            }
-            .nav-container {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            .controls-group {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
-    </style>
+    
+    <!-- External CSS Link -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body data-theme="dark">
 
@@ -734,7 +67,7 @@
             <div class="portfolio-grid">
                 <div class="portfolio-item">
                     <div class="thumb-container">
-                        <img src="https://via.placeholder.com/600x400/1a1c23/00d2ff?text=Web+Application+UI" alt="Project Thumbnail">
+                        <img src="value.jpg" alt="Project Thumbnail">
                     </div>
                     <div class="portfolio-info">
                         <h3>Interactive Web Application</h3>
@@ -743,7 +76,7 @@
                 </div>
                 <div class="portfolio-item">
                     <div class="thumb-container">
-                        <img src="https://via.placeholder.com/600x400/1a1c23/ff6b00?text=SDG+Climate+Portal" alt="Project Thumbnail">
+                        <img src="figure.jpg" alt="Project Thumbnail">
                     </div>
                     <div class="portfolio-info">
                         <h3>Sustainability & Climate Portal</h3>
@@ -752,7 +85,7 @@
                 </div>
                 <div class="portfolio-item">
                     <div class="thumb-container">
-                        <img src="https://via.placeholder.com/600x400/1a1c23/00d2ff?text=Clean+Code+Architecture" alt="Project Thumbnail">
+                        <img src="action.jpg" alt="Project Thumbnail">
                     </div>
                     <div class="portfolio-info">
                         <h3>Full-Stack System Architecture</h3>
@@ -838,7 +171,7 @@
 
             <div class="card" style="margin-top: 1.5rem;">
                 <h3>System Integration & Code Structure Integrity</h3>
-                <p>Designed and built specifically as a single standalone source file that opens instantly in VS Code or modern browsers like Google Chrome. Perfectly organized, non-binary, verified frontend code.</p>
+                <p>Designed and built specifically as standalone modular source files that open instantly in VS Code or modern browsers like Google Chrome. Perfectly organized, non-binary, verified frontend code.</p>
                 <div class="tag-group">
                     <span class="tag">Muhammad Humayal</span>
                     <span class="tag">Clean Code</span>
@@ -943,7 +276,7 @@
             </div>
         </section>
 
-        <!-- Page 4: Achievements (Expanded Visual Journey) -->
+        <!-- Page 4: Achievements -->
         <section id="achievements" class="page-view">
             <div class="detailed-header">
                 <h2>Milestones & O-Levels Journey</h2>
@@ -1018,7 +351,7 @@
             </div>
         </section>
 
-        <!-- Page 5: Extracurricular Activities (Punchy Visual Cards) -->
+        <!-- Page 5: Extracurricular Activities -->
         <section id="activities" class="page-view">
             <div class="detailed-header">
                 <h2>Activities & Interests</h2>
@@ -1082,29 +415,29 @@
         &copy; 2026 Muhammad Humayal. Built with standard-compliant HTML, CSS, and Vanilla JavaScript.
     </footer>
 
-    <script>
-        // Tabbed Multi-Page Navigation Logic
-        function switchPage(pageId, element) {
-            const pages = document.querySelectorAll('.page-view');
-            pages.forEach(page => page.classList.remove('active'));
-            
-            const navButtons = document.querySelectorAll('.nav-btn');
-            navButtons.forEach(btn => btn.classList.remove('active'));
+    <!-- AI Chatbot Widget -->
+    <button class="chatbot-toggle" id="chatbotToggle" onclick="toggleChatbot()" aria-label="Open chat assistant">💬</button>
+    <div class="chatbot-window" id="chatbotWindow">
+        <div class="chatbot-header">
+            <span>Chat with AI</span>
+            <button class="chatbot-close" onclick="toggleChatbot()" aria-label="Close chat">&times;</button>
+        </div>
+        <div class="chatbot-messages" id="chatbot-messages">
+            <div class="chatbot-msg bot-msg">Hi! Ask me anything about Humayal's skills, projects, or background.</div>
+        </div>
+        <div class="chatbot-typing" id="chatbot-typing">
+            <div class="chatbot-spinner">
+                <span></span><span></span><span></span>
+            </div>
+            <span class="chatbot-typing-label">Thinking…</span>
+        </div>
+        <div class="chatbot-input">
+            <input type="text" id="chatbot-input" placeholder="Type a message..." autocomplete="off" onkeydown="if(event.key === 'Enter') sendChatbotMessage()">
+            <button onclick="sendChatbotMessage()">Send</button>
+        </div>
+    </div>
 
-            document.getElementById(pageId).classList.add('active');
-            if(element) element.classList.add('active');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // Theme Toggle Handler supporting Dark, Light, Cyberpunk, and Emerald Palettes
-        function setTheme(themeName) {
-            document.body.setAttribute('data-theme', themeName);
-        }
-
-        // Dynamic Font Selection Logic
-        function changeFont(fontFamily) {
-            document.documentElement.style.setProperty('--font-main', fontFamily);
-        }
-    </script>
+    <!-- External JavaScript Link -->
+    <script src="script.js"></script>
 </body>
 </html>
