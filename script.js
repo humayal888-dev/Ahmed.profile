@@ -9,6 +9,8 @@ function switchPage(pageId, element) {
     document.getElementById(pageId).classList.add('active');
     if(element) element.classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (pageId === 'metrics') animateMetrics();
+    if (pageId === 'weather') startWeatherPage();
 }
 
 // Theme Toggle Handler supporting Dark, Light, Cyberpunk, and Emerald Palettes
@@ -20,6 +22,177 @@ function setTheme(themeName) {
 function changeFont(fontFamily) {
     document.documentElement.style.setProperty('--font-main', fontFamily);
 }
+
+// ================= Timer-Powered Effects (setTimeout & setInterval) =================
+const TYPEWRITER_SENTENCES = [
+    "Web Developer & Academic Achiever",
+    "Crafting fast, clean vanilla JS sites.",
+    "Exploring SDG and climate solutions.",
+    "Aiming for Computer Science excellence."
+];
+const TYPE_SPEED = 65;          // ms per typed character
+const DELETE_SPEED = 32;        // ms per deleted character
+const HOLD_FULL = 1900;         // pause once a sentence is fully typed
+const HOLD_EMPTY = 450;         // pause before the next sentence starts
+const SPOTLIGHT_INTERVAL = 3600; // ms between project spotlight changes
+
+// 1) Typewriter with rotating sentences + progress dots (setTimeout)
+function startTypewriter() {
+    const el = document.getElementById("typewriter-text");
+    if (!el) return;
+    const dots = document.querySelectorAll(".type-dot");
+    let sentenceIndex = 0;
+    let charIndex = 0;
+    let deleting = false;
+
+    function markDot() {
+        dots.forEach((dot, i) => dot.classList.toggle("active", i === sentenceIndex));
+    }
+    markDot();
+
+    function tick() {
+        const sentence = TYPEWRITER_SENTENCES[sentenceIndex];
+        let delay;
+
+        if (!deleting) {
+            charIndex++;
+            el.textContent = sentence.slice(0, charIndex);
+            if (charIndex === sentence.length) {
+                deleting = true;
+                delay = HOLD_FULL;
+            } else {
+                delay = TYPE_SPEED + Math.random() * 45;
+            }
+        } else {
+            charIndex--;
+            el.textContent = sentence.slice(0, charIndex);
+            if (charIndex === 0) {
+                deleting = false;
+                sentenceIndex = (sentenceIndex + 1) % TYPEWRITER_SENTENCES.length;
+                markDot();
+                delay = HOLD_EMPTY;
+            } else {
+                delay = DELETE_SPEED;
+            }
+        }
+        setTimeout(tick, delay);
+    }
+
+    setTimeout(tick, 400);
+}
+
+// 2) Live clock pill in the hero (setInterval)
+function startLiveClock() {
+    const el = document.getElementById("live-clock");
+    if (!el) return;
+    const pad = n => String(n).padStart(2, "0");
+
+    function render() {
+        const now = new Date();
+        const colon = '<span class="clock-colon">:</span>';
+        el.innerHTML = pad(now.getHours()) + colon + pad(now.getMinutes()) + colon + pad(now.getSeconds());
+    }
+    render();
+    setInterval(render, 1000);
+}
+
+// 3) Featured project spotlight that cycles automatically (setInterval)
+function startProjectSpotlight() {
+    const cards = document.querySelectorAll(".project-card");
+    const home = document.getElementById("home");
+    if (!cards.length) return;
+
+    document.documentElement.style.setProperty("--spot-duration", SPOTLIGHT_INTERVAL + "ms");
+    let current = 0;
+    let paused = false;
+
+    function show(index) {
+        cards.forEach(card => card.classList.remove("spotlight"));
+        void cards[index].offsetWidth; // restart the progress-line animation
+        cards[index].classList.add("spotlight");
+    }
+
+    cards.forEach((card, index) => {
+        card.addEventListener("mouseenter", () => {
+            paused = true;
+            cards.forEach(c => c.classList.remove("spotlight"));
+        });
+        card.addEventListener("mouseleave", () => {
+            paused = false;
+            current = index;
+            show(current);
+        });
+    });
+
+    show(current);
+    setInterval(() => {
+        if (paused || document.hidden || !home.classList.contains("active")) return;
+        current = (current + 1) % cards.length;
+        show(current);
+    }, SPOTLIGHT_INTERVAL);
+}
+
+// 4) Metrics count-up: bars and percentages fill together (setInterval)
+let metricsTimer = null;
+function animateMetrics() {
+    const items = [];
+    document.querySelectorAll("#metrics .stat-group").forEach(group => {
+        const fill = group.querySelector(".progress-fill");
+        const label = group.querySelector(".stat-label span:last-child");
+        if (!fill || !label) return;
+        if (!fill.dataset.target) {
+            fill.dataset.target = parseFloat(fill.style.width) || parseFloat(label.textContent) || 0;
+        }
+        fill.style.transition = "none";
+        fill.style.width = "0%";
+        label.textContent = "0%";
+        items.push({ fill: fill, label: label, target: parseFloat(fill.dataset.target) });
+    });
+    if (!items.length) return;
+
+    clearInterval(metricsTimer);
+    const DURATION = 1100;
+    const STAGGER = 140;
+    const startTime = Date.now();
+
+    metricsTimer = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        let finished = true;
+
+        items.forEach((item, i) => {
+            const t = Math.min(Math.max((elapsed - i * STAGGER) / DURATION, 0), 1);
+            const eased = 1 - Math.pow(1 - t, 3);
+            const value = item.target * eased;
+            item.fill.style.width = value + "%";
+            item.label.textContent = Math.round(value) + "%";
+            if (t < 1) finished = false;
+        });
+
+        if (finished) {
+            clearInterval(metricsTimer);
+            items.forEach(item => { item.fill.style.transition = ""; });
+        }
+    }, 16);
+}
+
+// 5) Gentle chatbot attention nudge after a short delay (setTimeout)
+function startChatbotNudge() {
+    const btn = document.getElementById("chatbotToggle");
+    if (!btn) return;
+    setTimeout(() => {
+        if (btn.classList.contains("active")) return;
+        btn.classList.add("nudge");
+        setTimeout(() => btn.classList.remove("nudge"), 5200);
+    }, 8000);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    startTypewriter();
+    startLiveClock();
+    startProjectSpotlight();
+    startChatbotNudge();
+});
+
 // ================= AI Chatbot Widget (Gemini-powered via /api/chat) =================
 let conversationHistory = [];
 
@@ -28,6 +201,7 @@ function toggleChatbot() {
     const btn = document.getElementById('chatbotToggle');
     win.classList.toggle('active');
     btn.classList.toggle('active');
+    btn.classList.remove('nudge');
     if (win.classList.contains('active')) {
         const input = document.getElementById('chatbot-input');
         if (input) input.focus();
@@ -108,4 +282,419 @@ async function sendChatbotMessage() {
         typing.style.display = 'none';
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
+}
+
+// ================= Live Weather Page (Open-Meteo API) =================
+const WX_REFRESH_MS = 10 * 60 * 1000; // auto-refresh every 10 minutes
+const WX_DEFAULT_PLACE = { name: "Islamabad", country: "Pakistan", lat: 33.6844, lon: 73.0479 };
+let wxPlace = WX_DEFAULT_PLACE;
+let wxData = null;
+let wxUnit = "C";
+let wxStarted = false;
+let wxLastUpdate = 0;
+let wxRequestId = 0;
+let wxShownTemp = 0;
+let wxTempTimer = null;
+let wxSunTimer = null;
+
+function wxEl(id) {
+    return document.getElementById(id);
+}
+
+// Small setInterval-based tween used for the temperature count-up and the sun arc
+function wxTween(duration, step, done) {
+    const start = Date.now();
+    const id = setInterval(() => {
+        const t = Math.min((Date.now() - start) / duration, 1);
+        step(1 - Math.pow(1 - t, 3));
+        if (t >= 1) {
+            clearInterval(id);
+            if (done) done();
+        }
+    }, 16);
+    return id;
+}
+
+// WMO weather codes -> label, icon and visual theme
+function wxDescribe(code, isDay) {
+    const day = isDay !== 0;
+    if (code === 0) return { label: day ? "Clear sky" : "Clear night", icon: day ? "☀️" : "🌙", theme: "clear" };
+    if (code === 1) return { label: "Mainly clear", icon: day ? "🌤️" : "🌙", theme: "clear" };
+    if (code === 2) return { label: "Partly cloudy", icon: day ? "⛅" : "☁️", theme: "cloud" };
+    if (code === 3) return { label: "Overcast", icon: "☁️", theme: "cloud" };
+    if (code === 45 || code === 48) return { label: "Foggy", icon: "🌫️", theme: "fog" };
+    if (code >= 51 && code <= 57) return { label: code >= 56 ? "Freezing drizzle" : "Light drizzle", icon: "🌦️", theme: "rain" };
+    if (code >= 61 && code <= 67) {
+        const rainLabel = code >= 66 ? "Freezing rain" : code === 61 ? "Light rain" : code === 63 ? "Rain" : "Heavy rain";
+        return { label: rainLabel, icon: "🌧️", theme: "rain" };
+    }
+    if (code >= 71 && code <= 77) {
+        const snowLabel = code === 77 ? "Snow grains" : code === 71 ? "Light snow" : code === 73 ? "Snowfall" : "Heavy snow";
+        return { label: snowLabel, icon: "❄️", theme: "snow" };
+    }
+    if (code >= 80 && code <= 82) {
+        const showerLabel = code === 80 ? "Light showers" : code === 81 ? "Rain showers" : "Violent showers";
+        return { label: showerLabel, icon: "🌦️", theme: "rain" };
+    }
+    if (code === 85 || code === 86) return { label: "Snow showers", icon: "🌨️", theme: "snow" };
+    if (code >= 95) return { label: code === 95 ? "Thunderstorm" : "Thunderstorm with hail", icon: "⛈️", theme: "storm" };
+    return { label: "Unknown conditions", icon: "🌡️", theme: "cloud" };
+}
+
+function wxT(celsius) {
+    return wxUnit === "F" ? Math.round(celsius * 9 / 5 + 32) : Math.round(celsius);
+}
+
+function wxSetStatus(message, type) {
+    const el = wxEl("weather-status");
+    el.className = "weather-status" + (type ? " " + type : "");
+    el.textContent = message || "";
+}
+
+function wxTimeToMinutes(iso) {
+    return parseInt(iso.slice(11, 13), 10) * 60 + parseInt(iso.slice(14, 16), 10);
+}
+
+function wxHourStart() {
+    const key = wxData.current.time.slice(0, 13);
+    const index = wxData.hourly.time.findIndex(t => t.slice(0, 13) === key);
+    return index < 0 ? 0 : index;
+}
+
+// ---- Fetching ----
+async function loadWeather(place, silent) {
+    const requestId = ++wxRequestId;
+    const body = wxEl("weather-body");
+    if (!silent) {
+        body.classList.add("is-loading");
+        wxSetStatus("Fetching live weather data…", "loading");
+    }
+
+    const url = "https://api.open-meteo.com/v1/forecast" +
+        "?latitude=" + place.lat +
+        "&longitude=" + place.lon +
+        "&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m" +
+        "&hourly=temperature_2m,weather_code,precipitation_probability" +
+        "&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max" +
+        "&timezone=auto&forecast_days=7";
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("The weather service responded with status " + response.status + ".");
+        const data = await response.json();
+        if (data.error) throw new Error(data.reason || "The weather service returned an error.");
+        if (requestId !== wxRequestId) return;
+
+        wxData = data;
+        wxPlace = place;
+        wxLastUpdate = Date.now();
+        renderWeather();
+        wxSetStatus("");
+    } catch (err) {
+        if (requestId !== wxRequestId) return;
+        console.error("Weather error:", err);
+        if (!silent) {
+            const offline = err instanceof TypeError;
+            wxSetStatus(offline ? "Can't reach the weather service. Check your internet connection and try again." : err.message, "error");
+        }
+    } finally {
+        if (requestId === wxRequestId) body.classList.remove("is-loading");
+    }
+}
+
+async function searchWeatherCity() {
+    const input = wxEl("weather-input");
+    const query = input.value.trim();
+    if (!query) return;
+    wxSetStatus("Searching for \"" + query + "\"…", "loading");
+
+    try {
+        const response = await fetch("https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(query) + "&count=1&language=en&format=json");
+        if (!response.ok) throw new Error("The city search failed (status " + response.status + ").");
+        const data = await response.json();
+        if (!data.results || !data.results.length) {
+            wxSetStatus("No city found for \"" + query + "\". Try a different spelling.", "error");
+            return;
+        }
+        const r = data.results[0];
+        input.value = "";
+        loadWeather({ name: r.name, country: r.country || "", lat: r.latitude, lon: r.longitude });
+    } catch (err) {
+        console.error("City search error:", err);
+        wxSetStatus(err instanceof TypeError ? "Can't reach the search service. Check your internet connection." : err.message, "error");
+    }
+}
+
+function useMyLocation() {
+    if (!navigator.geolocation) {
+        wxSetStatus("Your browser doesn't support location access.", "error");
+        return;
+    }
+    wxSetStatus("Finding your location…", "loading");
+    navigator.geolocation.getCurrentPosition(
+        pos => loadWeather({ name: "Your Location", country: "", lat: +pos.coords.latitude.toFixed(4), lon: +pos.coords.longitude.toFixed(4) }),
+        () => wxSetStatus("Couldn't get your location. Allow access or search for a city instead.", "error"),
+        { timeout: 10000 }
+    );
+}
+
+function setWeatherUnit(unit) {
+    wxUnit = unit;
+    wxEl("unit-c").classList.toggle("active", unit === "C");
+    wxEl("unit-f").classList.toggle("active", unit === "F");
+    if (wxData) renderWxTemps();
+}
+
+// ---- Rendering ----
+function renderWeather() {
+    if (!wxData) return;
+    const cur = wxData.current;
+    const info = wxDescribe(cur.weather_code, cur.is_day);
+    const hero = wxEl("weather-hero");
+    hero.dataset.wx = info.theme;
+
+    wxEl("wx-place").textContent = wxPlace.name + (wxPlace.country ? ", " + wxPlace.country : "");
+    const dateLabel = new Date(cur.time.slice(0, 10) + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
+    wxEl("wx-time").textContent = dateLabel + " • " + cur.time.slice(11, 16) + " local time";
+    wxEl("wx-icon").textContent = info.icon;
+    wxEl("wx-cond").textContent = info.label;
+
+    renderWxFx(info.theme);
+    renderWxSun();
+    renderWxMetrics();
+    renderWxTemps();
+    updateWxChips();
+    updateWxStamp();
+}
+
+// Everything that depends on the °C / °F choice
+function renderWxTemps() {
+    const cur = wxData.current;
+    const daily = wxData.daily;
+    wxEl("wx-feels").textContent = "Feels like " + wxT(cur.apparent_temperature) + "°";
+    wxEl("wx-hilo").textContent = "H " + wxT(daily.temperature_2m_max[0]) + "° • L " + wxT(daily.temperature_2m_min[0]) + "°";
+
+    const target = wxT(cur.temperature_2m);
+    const from = wxShownTemp;
+    clearInterval(wxTempTimer);
+    wxTempTimer = wxTween(800, p => {
+        wxEl("wx-temp").textContent = Math.round(from + (target - from) * p) + "°" + wxUnit;
+    }, () => { wxShownTemp = target; });
+
+    renderWxHourly();
+    renderWxChart();
+    renderWxDaily();
+}
+
+function renderWxFx(theme) {
+    let html = "";
+    if (theme === "rain" || theme === "storm") {
+        for (let i = 0; i < 22; i++) {
+            html += '<i class="wx-drop" style="left:' + (Math.random() * 100).toFixed(1) + "%;animation-duration:" + (0.7 + Math.random() * 0.8).toFixed(2) + "s;animation-delay:-" + (Math.random() * 2).toFixed(2) + 's"></i>';
+        }
+    } else if (theme === "snow") {
+        for (let i = 0; i < 18; i++) {
+            html += '<i class="wx-flake" style="left:' + (Math.random() * 100).toFixed(1) + "%;animation-duration:" + (4 + Math.random() * 4).toFixed(2) + "s;animation-delay:-" + (Math.random() * 6).toFixed(2) + 's"></i>';
+        }
+    }
+    wxEl("weather-fx").innerHTML = html;
+}
+
+function renderWxSun() {
+    const cur = wxData.current;
+    const rise = wxData.daily.sunrise[0];
+    const set = wxData.daily.sunset[0];
+    if (!rise || !set) {
+        wxEl("wx-sunrise").textContent = "--:--";
+        wxEl("wx-sunset").textContent = "--:--";
+        return;
+    }
+    wxEl("wx-sunrise").textContent = rise.slice(11, 16);
+    wxEl("wx-sunset").textContent = set.slice(11, 16);
+
+    const raw = (wxTimeToMinutes(cur.time) - wxTimeToMinutes(rise)) / (wxTimeToMinutes(set) - wxTimeToMinutes(rise));
+    const fraction = Math.min(Math.max(raw, 0), 1);
+    const dot = wxEl("sun-dot");
+    const progress = wxEl("sun-progress");
+    dot.classList.toggle("night", raw < 0 || raw > 1);
+
+    clearInterval(wxSunTimer);
+    wxSunTimer = wxTween(1200, p => {
+        const v = fraction * p;
+        const angle = Math.PI * (1 - v);
+        dot.setAttribute("cx", (130 + 110 * Math.cos(angle)).toFixed(1));
+        dot.setAttribute("cy", (130 - 110 * Math.sin(angle)).toFixed(1));
+        progress.style.strokeDashoffset = (100 - v * 100).toFixed(1);
+    });
+}
+
+function wxSetMetric(key, value, percent, note) {
+    wxEl("m-" + key).textContent = value;
+    wxEl("m-" + key + "-note").textContent = note;
+    const bar = wxEl("m-" + key + "-bar");
+    bar.style.width = "0%";
+    setTimeout(() => { bar.style.width = Math.min(Math.max(percent, 0), 100) + "%"; }, 80);
+}
+
+function renderWxMetrics() {
+    const c = wxData.current;
+    const d = wxData.daily;
+    const compass = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+    const direction = compass[Math.round(c.wind_direction_10m / 45) % 8];
+    const humidity = c.relative_humidity_2m;
+    const pressure = c.pressure_msl;
+    const uv = d.uv_index_max && d.uv_index_max[0] != null ? d.uv_index_max[0] : 0;
+    const rain = d.precipitation_probability_max && d.precipitation_probability_max[0] != null ? d.precipitation_probability_max[0] : 0;
+    const uvLabel = uv < 3 ? "Low" : uv < 6 ? "Moderate" : uv < 8 ? "High" : uv < 11 ? "Very high" : "Extreme";
+
+    wxSetMetric("humidity", humidity + "%", humidity, humidity < 30 ? "Dry air" : humidity < 60 ? "Comfortable" : "Humid");
+    wxSetMetric("wind", Math.round(c.wind_speed_10m) + " km/h", c.wind_speed_10m / 60 * 100, "From the " + direction);
+    wxSetMetric("pressure", Math.round(pressure) + " hPa", (pressure - 980) / 70 * 100, pressure < 1009 ? "Low pressure" : pressure > 1022 ? "High pressure" : "Normal range");
+    wxSetMetric("uv", uv.toFixed(1), uv / 11 * 100, uvLabel + " today");
+    wxSetMetric("cloud", c.cloud_cover + "%", c.cloud_cover, c.cloud_cover < 20 ? "Clear skies" : c.cloud_cover < 60 ? "Partly cloudy" : "Mostly cloudy");
+    wxSetMetric("rain", rain + "%", rain, c.precipitation > 0 ? c.precipitation + " mm falling now" : "No rain right now");
+}
+
+function renderWxHourly() {
+    const h = wxData.hourly;
+    const daily = wxData.daily;
+    const start = wxHourStart();
+    let html = "";
+    for (let i = 0; i < 24 && start + i < h.time.length; i++) {
+        const t = h.time[start + i];
+        const dIndex = daily.time.indexOf(t.slice(0, 10));
+        let isDay = 1;
+        if (dIndex >= 0 && daily.sunrise[dIndex] && daily.sunset[dIndex]) {
+            isDay = t >= daily.sunrise[dIndex] && t < daily.sunset[dIndex] ? 1 : 0;
+        }
+        const info = wxDescribe(h.weather_code[start + i], isDay);
+        const chance = h.precipitation_probability ? h.precipitation_probability[start + i] : 0;
+        html += '<div class="hour-card' + (i === 0 ? " now" : "") + '" style="animation-delay:' + (i * 35) + 'ms">' +
+            '<div class="hour-time">' + (i === 0 ? "Now" : t.slice(11, 16)) + "</div>" +
+            '<div class="hour-icon">' + info.icon + "</div>" +
+            '<div class="hour-temp">' + wxT(h.temperature_2m[start + i]) + "°</div>" +
+            '<div class="hour-rain">' + (chance >= 10 ? "💧" + chance + "%" : "") + "</div></div>";
+    }
+    wxEl("hourly-strip").innerHTML = html;
+}
+
+function renderWxChart() {
+    const h = wxData.hourly;
+    const start = wxHourStart();
+    const pts = [];
+    for (let i = 0; i < 24 && start + i < h.time.length; i++) {
+        pts.push({ label: i === 0 ? "Now" : h.time[start + i].slice(11, 16), v: wxT(h.temperature_2m[start + i]) });
+    }
+    if (pts.length < 3) return;
+
+    const W = 600, H = 240, L = 38, R = 16, T = 34, B = 36;
+    const vals = pts.map(p => p.v);
+    let min = Math.min.apply(null, vals);
+    let max = Math.max.apply(null, vals);
+    if (max - min < 4) { max += 2; min -= 2; }
+    const pad = (max - min) * 0.15;
+    min -= pad;
+    max += pad;
+
+    const x = i => L + i * (W - L - R) / (pts.length - 1);
+    const y = v => T + (max - v) / (max - min) * (H - T - B);
+    const c = pts.map((p, i) => [x(i), y(p.v)]);
+    const f = n => n.toFixed(1);
+
+    let line = "M" + f(c[0][0]) + " " + f(c[0][1]);
+    for (let i = 1; i < c.length - 1; i++) {
+        const mx = (c[i][0] + c[i + 1][0]) / 2;
+        const my = (c[i][1] + c[i + 1][1]) / 2;
+        line += " Q" + f(c[i][0]) + " " + f(c[i][1]) + " " + f(mx) + " " + f(my);
+    }
+    const last = c[c.length - 1];
+    line += " L" + f(last[0]) + " " + f(last[1]);
+    const area = line + " L" + f(last[0]) + " " + (H - B) + " L" + f(c[0][0]) + " " + (H - B) + " Z";
+
+    let svg = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Hourly temperature trend for the next 24 hours">' +
+        '<defs><linearGradient id="wxArea" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" style="stop-color: var(--electric-blue); stop-opacity: 0.35"></stop>' +
+        '<stop offset="100%" style="stop-color: var(--electric-blue); stop-opacity: 0"></stop></linearGradient></defs>';
+
+    for (let k = 0; k <= 3; k++) {
+        const v = max - k * (max - min) / 3;
+        svg += '<line class="chart-grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + f(y(v)) + '" y2="' + f(y(v)) + '"></line>' +
+            '<text class="chart-axis" text-anchor="end" x="' + (L - 8) + '" y="' + f(y(v) + 4) + '">' + Math.round(v) + "°</text>";
+    }
+
+    svg += '<path class="chart-area" d="' + area + '" fill="url(#wxArea)"></path>' +
+        '<path class="chart-line" pathLength="1" d="' + line + '"></path>' +
+        '<circle class="chart-ring" cx="' + f(c[0][0]) + '" cy="' + f(c[0][1]) + '" r="6"></circle>';
+
+    pts.forEach((p, i) => {
+        if (i % 4 !== 0) return;
+        svg += '<circle class="chart-dot" cx="' + f(c[i][0]) + '" cy="' + f(c[i][1]) + '" r="4.5"><title>' + p.label + " • " + p.v + "°" + wxUnit + "</title></circle>" +
+            '<text class="chart-val" x="' + f(c[i][0]) + '" y="' + f(c[i][1] - 12) + '">' + p.v + "°</text>" +
+            '<text class="chart-axis" text-anchor="middle" x="' + f(c[i][0]) + '" y="' + (H - 12) + '">' + p.label + "</text>";
+    });
+
+    wxEl("wx-chart").innerHTML = svg + "</svg>";
+}
+
+function renderWxDaily() {
+    const d = wxData.daily;
+    const mins = d.temperature_2m_min.map(wxT);
+    const maxs = d.temperature_2m_max.map(wxT);
+    const lo = Math.min.apply(null, mins);
+    const hi = Math.max.apply(null, maxs);
+    const span = Math.max(hi - lo, 1);
+    let html = "";
+
+    d.time.forEach((date, i) => {
+        const info = wxDescribe(d.weather_code[i], 1);
+        const name = i === 0 ? "Today" : new Date(date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+        const width = Math.max((maxs[i] - mins[i]) / span * 100, 6);
+        const left = Math.min((mins[i] - lo) / span * 100, 100 - width);
+        const rain = d.precipitation_probability_max ? d.precipitation_probability_max[i] : null;
+        const tip = info.label + (rain !== null ? " • " + rain + "% chance of rain" : "");
+        html += '<div class="daily-row" style="animation-delay:' + (i * 70) + 'ms" title="' + tip + '">' +
+            '<span class="d-day">' + name + "</span>" +
+            '<span class="d-icon">' + info.icon + "</span>" +
+            '<span class="d-lo">' + mins[i] + "°</span>" +
+            '<div class="d-range"><span style="left:' + left.toFixed(1) + "%;width:" + width.toFixed(1) + '%"></span></div>' +
+            '<span class="d-hi">' + maxs[i] + "°</span></div>";
+    });
+    wxEl("daily-list").innerHTML = html;
+}
+
+function updateWxChips() {
+    document.querySelectorAll("#quick-cities .city-chip").forEach(chip => {
+        chip.classList.toggle("active", chip.dataset.name === wxPlace.name);
+    });
+}
+
+function updateWxStamp() {
+    const el = wxEl("wx-updated");
+    if (!wxLastUpdate) {
+        el.textContent = "Waiting for data";
+        return;
+    }
+    const mins = Math.floor((Date.now() - wxLastUpdate) / 60000);
+    el.textContent = mins < 1 ? "Updated just now" : "Updated " + mins + " min ago";
+}
+
+// Called whenever the Weather tab opens: loads once, then keeps itself fresh (setInterval)
+function startWeatherPage() {
+    if (wxStarted) {
+        if (Date.now() - wxLastUpdate > WX_REFRESH_MS) loadWeather(wxPlace, true);
+        return;
+    }
+    wxStarted = true;
+
+    wxEl("quick-cities").addEventListener("click", e => {
+        const chip = e.target.closest(".city-chip");
+        if (!chip) return;
+        loadWeather({ name: chip.dataset.name, country: chip.dataset.country, lat: parseFloat(chip.dataset.lat), lon: parseFloat(chip.dataset.lon) });
+    });
+
+    loadWeather(wxPlace);
+    setInterval(updateWxStamp, 30000);
+    setInterval(() => {
+        if (!document.hidden && wxEl("weather").classList.contains("active")) loadWeather(wxPlace, true);
+    }, WX_REFRESH_MS);
 }

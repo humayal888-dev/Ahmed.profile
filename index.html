@@ -8,7 +8,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
     
     <!-- External CSS Link -->
     <link rel="stylesheet" href="style.css">
@@ -32,6 +32,7 @@
                     <li><button class="nav-btn" onclick="switchPage('metrics', this)">Metrics & Stats</button></li>
                     <li><button class="nav-btn" onclick="switchPage('achievements', this)">Achievements</button></li>
                     <li><button class="nav-btn" onclick="switchPage('activities', this)">Activities</button></li>
+                    <li><button class="nav-btn" onclick="switchPage('weather', this)">Weather</button></li>
                 </ul>
             </nav>
             <div class="controls-group">
@@ -49,47 +50,84 @@
             <!-- Hero Section -->
             <div class="hero">
                 <div class="hero-content">
-                    <span class="subtitle">Web Developer & Academic Achiever</span>
-                    <h1>Muhammad Humayal</h1>
+                    <div class="live-pill" aria-hidden="true">
+                        <span class="live-dot"></span>
+                        <span class="live-label">LIVE</span>
+                        <span class="live-clock" id="live-clock">--:--:--</span>
+                    </div>
+                    <span class="subtitle"><span id="typewriter-text"></span><span class="typewriter-cursor">|</span></span>
+                    <div class="type-dots" aria-hidden="true">
+                        <span class="type-dot"></span>
+                        <span class="type-dot"></span>
+                        <span class="type-dot"></span>
+                        <span class="type-dot"></span>
+                    </div>
+                    <h1 class="gradient-text">Muhammad Humayal</h1>
                     <p>Driven web developer with a strong foundation in Islamic memorization and academic excellence. Focused on high-standard web development, climate initiatives, and targeting premier university standards.</p>
                     <button class="cta-btn" onclick="switchPage('portfolio', document.querySelectorAll('.nav-btn')[1])">View My Work</button>
                 </div>
                 <div class="hero-image-wrapper">
-                    <img src="image.jpeg" alt="Muhammad Humayal Headshot" class="hero-headshot">
+                    <div class="hero-card-frame">
+                        <img src="image.jpeg" alt="Muhammad Humayal Headshot" class="hero-headshot">
+                    </div>
                 </div>
             </div>
 
             <!-- Featured Work Section -->
             <div class="section-header">
                 <h2>Featured Work</h2>
+                <div class="header-divider"><span class="glow-dot"></span></div>
                 <p>A curated selection of sample web development projects and technical initiatives.</p>
             </div>
             <div class="portfolio-grid">
-                <div class="portfolio-item">
+                <div class="portfolio-item project-card">
                     <div class="thumb-container">
-                        <img src="value.jpg" alt="Project Thumbnail">
+                        <img src="value.jpg" alt="Interactive Web Application">
+                        <span class="badge badge-blue">Frontend App</span>
                     </div>
                     <div class="portfolio-info">
-                        <h3>Interactive Web Application</h3>
-                        <p>High-speed, responsive frontend interface built with modern clean web standards.</p>
+                        <h3 class="accent-title-blue">Interactive Web Application</h3>
+                        <p>High-speed, responsive frontend interface built with modern clean web standards and responsive layout modules.</p>
+                        <div class="tech-stack-pills">
+                            <span class="tech-pill">JavaScript</span>
+                            <span class="tech-pill">CSS3</span>
+                            <span class="tech-pill">HTML5</span>
+                            <span class="tech-pill">DOM API</span>
+                        </div>
                     </div>
                 </div>
-                <div class="portfolio-item">
+
+                <div class="portfolio-item project-card">
                     <div class="thumb-container">
-                        <img src="figure.jpg" alt="Project Thumbnail">
+                        <img src="figure.jpg" alt="Sustainability Portal">
+                        <span class="badge badge-emerald">Climate Tech</span>
                     </div>
                     <div class="portfolio-info">
-                        <h3>Sustainability & Climate Portal</h3>
-                        <p>Web portal concept inspired by SDG sustainability and Cambridge Climate Quest research.</p>
+                        <h3 class="accent-title-emerald">Sustainability & Climate Portal</h3>
+                        <p>Web portal concept inspired by SDG sustainability and Cambridge Climate Quest research initiatives.</p>
+                        <div class="tech-stack-pills">
+                            <span class="tech-pill">HTML5</span>
+                            <span class="tech-pill">CSS Grid</span>
+                            <span class="tech-pill">SDG API</span>
+                            <span class="tech-pill">UI/UX</span>
+                        </div>
                     </div>
                 </div>
-                <div class="portfolio-item">
+
+                <div class="portfolio-item project-card">
                     <div class="thumb-container">
-                        <img src="action.jpg" alt="Project Thumbnail">
+                        <img src="action.jpg" alt="Full-Stack System Architecture">
+                        <span class="badge badge-orange">System Architecture</span>
                     </div>
                     <div class="portfolio-info">
-                        <h3>Full-Stack System Architecture</h3>
-                        <p>Custom standalone file structure optimized for instant multi-platform execution.</p>
+                        <h3 class="accent-title-orange">Full-Stack Architecture</h3>
+                        <p>Custom standalone file structure optimized for instant multi-platform execution and clean performance.</p>
+                        <div class="tech-stack-pills">
+                            <span class="tech-pill">ES6+ JS</span>
+                            <span class="tech-pill">Async API</span>
+                            <span class="tech-pill">CSS Vars</span>
+                            <span class="tech-pill">Vercel</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -100,24 +138,28 @@
             <!-- Testimonials Section -->
             <div class="section-header">
                 <h2>Academic & Peer Feedback</h2>
+                <div class="header-divider"><span class="glow-dot"></span></div>
                 <p>Comments from mentors, project partners, and academic supervisors.</p>
             </div>
             <div class="testimonials-grid">
-                <div class="testimonial-card">
+                <div class="testimonial-card glass-card">
+                    <div class="card-mini-banner banner-blue"></div>
                     <p>"Muhammad Humayal demonstrates incredible mental discipline and dedication, whether memorizing complex material or building structured code."</p>
                     <div class="client-info">
                         <h4>Academic Mentor</h4>
                         <span>University Prep Supervisor</span>
                     </div>
                 </div>
-                <div class="testimonial-card">
+                <div class="testimonial-card glass-card">
+                    <div class="card-mini-banner banner-emerald"></div>
                     <p>"His involvement in the Cambridge Climate Quest showed high initiative, logical problem-solving, and passion for real-world impact."</p>
                     <div class="client-info">
                         <h4>Project Coordinator</h4>
                         <span>Cambridge SDG Quest</span>
                     </div>
                 </div>
-                <div class="testimonial-card">
+                <div class="testimonial-card glass-card">
+                    <div class="card-mini-banner banner-orange"></div>
                     <p>"Humayal approaches web development with precision and efficiency. A true high-standard candidate."</p>
                     <div class="client-info">
                         <h4>Lead Developer Collaborator</h4>
@@ -126,27 +168,47 @@
                 </div>
             </div>
 
-            <!-- Client / Organizations Logos -->
+            <!-- Initiatives Section -->
             <div class="section-header">
                 <h2>Initiatives & Standards</h2>
+                <div class="header-divider"><span class="glow-dot"></span></div>
+                <p>Core pillars of academic leadership, technical commitment, and global impact.</p>
             </div>
             <div class="brands-grid">
-                <div class="brand-logo">CAMBRIDGE CLIMATE QUEST</div>
-                <div class="brand-logo">SDG PROJECTS</div>
-                <div class="brand-logo">HAFIZ-E-QURAN</div>
-                <div class="brand-logo">WEB DEV STANDARDS</div>
+                <div class="brand-logo glass-card initiative-pill">
+                    <span class="initiative-icon-badge">🌍</span>
+                    <span class="logo-text">CAMBRIDGE CLIMATE QUEST</span>
+                    <span class="check-indicator">✓</span>
+                </div>
+                <div class="brand-logo glass-card initiative-pill">
+                    <span class="initiative-icon-badge">🌱</span>
+                    <span class="logo-text">SDG PROJECTS</span>
+                    <span class="check-indicator">✓</span>
+                </div>
+                <div class="brand-logo glass-card initiative-pill">
+                    <span class="initiative-icon-badge">📖</span>
+                    <span class="logo-text">HAFIZ-E-QURAN</span>
+                    <span class="check-indicator">✓</span>
+                </div>
+                <div class="brand-logo glass-card initiative-pill">
+                    <span class="initiative-icon-badge">💻</span>
+                    <span class="logo-text">WEB DEV STANDARDS</span>
+                    <span class="check-indicator">✓</span>
+                </div>
             </div>
         </section>
 
-        <!-- Page 2: Detailed Portfolio Page -->
+        <!-- Page 2: Detailed Profile Page -->
         <section id="portfolio" class="page-view">
             <div class="detailed-header">
                 <h2>Detailed Profile & Academic Roadmap</h2>
+                <div class="header-divider"><span class="glow-dot"></span></div>
                 <p>Comprehensive overview of technical web development capabilities, academic achievements, and future university goals.</p>
             </div>
 
             <div class="grid-2">
-                <div class="card">
+                <div class="card glass-card">
+                    <div class="card-mini-banner banner-blue"></div>
                     <h3>Web Development & Engineering</h3>
                     <p>Constructing lightweight, high-performance web applications using standard-compliant HTML, CSS, and modern ES6+ JavaScript without reliance on bloated frameworks or external binaries.</p>
                     <ul class="spec-list">
@@ -157,7 +219,8 @@
                     </ul>
                 </div>
 
-                <div class="card">
+                <div class="card glass-card">
+                    <div class="card-mini-banner banner-emerald"></div>
                     <h3>University Ambition & Academic Goals</h3>
                     <p>Targeting admission into top-tier higher education institutions by maintaining outstanding academic consistency, research initiative, and extracurricular leadership.</p>
                     <ul class="spec-list">
@@ -169,7 +232,8 @@
                 </div>
             </div>
 
-            <div class="card" style="margin-top: 1.5rem;">
+            <div class="card glass-card" style="margin-top: 1.5rem;">
+                <div class="card-mini-banner banner-orange"></div>
                 <h3>System Integration & Code Structure Integrity</h3>
                 <p>Designed and built specifically as standalone modular source files that open instantly in VS Code or modern browsers like Google Chrome. Perfectly organized, non-binary, verified frontend code.</p>
                 <div class="tag-group">
@@ -185,6 +249,7 @@
         <section id="metrics" class="page-view">
             <div class="detailed-header">
                 <h2>Development Metrics & Performance Profile</h2>
+                <div class="header-divider"><span class="glow-dot"></span></div>
                 <p>Quantitative breakdown of core development competencies, passion for new projects, and statistical metrics.</p>
             </div>
 
@@ -196,7 +261,8 @@
             </div>
 
             <div class="grid-2" style="margin-top: 1.5rem;">
-                <div class="card">
+                <div class="card glass-card">
+                    <div class="card-mini-banner banner-blue"></div>
                     <h3>Technical Proficiency & Confidence</h3>
                     
                     <div class="stat-group">
@@ -240,7 +306,8 @@
                     </div>
                 </div>
 
-                <div class="card">
+                <div class="card glass-card">
+                    <div class="card-mini-banner banner-emerald"></div>
                     <h3>Academic & Execution Metrics</h3>
                     
                     <div class="stat-group">
@@ -280,12 +347,14 @@
         <section id="achievements" class="page-view">
             <div class="detailed-header">
                 <h2>Milestones & O-Levels Journey</h2>
+                <div class="header-divider"><span class="glow-dot"></span></div>
                 <p>An interactive, high-impact timeline showing growth from foundational discipline to top academic standards.</p>
             </div>
 
             <!-- Key Metric Highlights Cards -->
             <div class="grid-3" style="margin-bottom: 2.5rem;">
-                <div class="card achievement-card">
+                <div class="card glass-card achievement-card">
+                    <div class="card-mini-banner banner-blue"></div>
                     <div class="stat-badge-overlay">100%</div>
                     <h3>Holy Quran Memorization</h3>
                     <p>Foundation of ironclad discipline and memory precision.</p>
@@ -294,7 +363,8 @@
                         <span class="tag">Spiritual Core</span>
                     </div>
                 </div>
-                <div class="card achievement-card">
+                <div class="card glass-card achievement-card">
+                    <div class="card-mini-banner banner-emerald"></div>
                     <div class="stat-badge-overlay">O-Levels</div>
                     <h3>Academic Ascent</h3>
                     <p>Rising from foundational groundwork to academic distinction.</p>
@@ -303,7 +373,8 @@
                         <span class="tag">Top Excellence</span>
                     </div>
                 </div>
-                <div class="card achievement-card">
+                <div class="card glass-card achievement-card">
+                    <div class="card-mini-banner banner-orange"></div>
                     <div class="stat-badge-overlay">Global</div>
                     <h3>Cambridge Climate Quest</h3>
                     <p>SDG research and international environmental action.</p>
@@ -319,7 +390,8 @@
             <div class="timeline">
                 <div class="timeline-item">
                     <div class="timeline-date">Phase 1 • Spiritual Discipline</div>
-                    <div class="card">
+                    <div class="card glass-card">
+                        <div class="card-mini-banner banner-blue"></div>
                         <h3>Completion of Hifz-e-Quran</h3>
                         <p>Mastered full Quranic retention, forging an extraordinary work ethic, deep focus, and high analytical capacity early in life.</p>
                     </div>
@@ -327,7 +399,8 @@
 
                 <div class="timeline-item">
                     <div class="timeline-date">Phase 2 • Starting From the Ground Up</div>
-                    <div class="card">
+                    <div class="card glass-card">
+                        <div class="card-mini-banner banner-emerald"></div>
                         <h3>Foundational Academic Journey</h3>
                         <p>Stepped into formal rigorous studies, building core knowledge step-by-step with relentless determination to overcome initial academic challenges.</p>
                     </div>
@@ -335,7 +408,8 @@
 
                 <div class="timeline-item">
                     <div class="timeline-date">Phase 3 • O-Levels Mastery & Balancing Multitasking</div>
-                    <div class="card">
+                    <div class="card glass-card">
+                        <div class="card-mini-banner banner-orange"></div>
                         <h3>Cambridge O-Levels Distinction</h3>
                         <p>Achieved high academic standing while simultaneously mastering modern Web Development technologies and participating in extracurricular competitions.</p>
                     </div>
@@ -343,7 +417,8 @@
 
                 <div class="timeline-item">
                     <div class="timeline-date">Phase 4 • Higher University Horizon</div>
-                    <div class="card">
+                    <div class="card glass-card">
+                        <div class="card-mini-banner banner-blue"></div>
                         <h3>Targeting Premier Higher Education</h3>
                         <p>Combining developer experience, academic consistency, and SDG climate initiatives to secure entry into high-standard international universities.</p>
                     </div>
@@ -355,11 +430,13 @@
         <section id="activities" class="page-view">
             <div class="detailed-header">
                 <h2>Activities & Interests</h2>
+                <div class="header-divider"><span class="glow-dot"></span></div>
                 <p>Dynamic snapshots of real-world engagements, athletic focus, and ongoing learning initiatives.</p>
             </div>
 
             <div class="grid-3">
-                <div class="card">
+                <div class="card glass-card">
+                    <div class="card-mini-banner banner-emerald"></div>
                     <h3>🌍 Climate Quest</h3>
                     <p>Cambridge SDG research and active environmental sustainability projects.</p>
                     <div class="tag-group">
@@ -367,7 +444,8 @@
                         <span class="tag">SDG</span>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card glass-card">
+                    <div class="card-mini-banner banner-orange"></div>
                     <h3>🏏 Cricket Focus</h3>
                     <p>Strategic match play, tactical awareness, and sportsmanship under pressure.</p>
                     <div class="tag-group">
@@ -375,7 +453,8 @@
                         <span class="tag">Strategy</span>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card glass-card">
+                    <div class="card-mini-banner banner-blue"></div>
                     <h3>⚽ Football Teamwork</h3>
                     <p>High-energy field communication, endurance, and team strategy.</p>
                     <div class="tag-group">
@@ -383,7 +462,8 @@
                         <span class="tag">Agility</span>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card glass-card">
+                    <div class="card-mini-banner banner-emerald"></div>
                     <h3>💻 Code Innovations</h3>
                     <p>Continuous exploration of frontend design systems and clean code logic.</p>
                     <div class="tag-group">
@@ -391,7 +471,8 @@
                         <span class="tag">UI Logic</span>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card glass-card">
+                    <div class="card-mini-banner banner-blue"></div>
                     <h3>📚 Academic Leadership</h3>
                     <p>Peer study groups, university preparation, and research collaboration.</p>
                     <div class="tag-group">
@@ -399,13 +480,160 @@
                         <span class="tag">Mentorship</span>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card glass-card">
+                    <div class="card-mini-banner banner-orange"></div>
                     <h3>🎯 Target Objectives</h3>
                     <p>Applying structured focus to achieve high university standards.</p>
                     <div class="tag-group">
                         <span class="tag">Ambition</span>
                         <span class="tag">Future</span>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page 6: Live Weather (Open-Meteo API) -->
+        <section id="weather" class="page-view">
+            <div class="detailed-header">
+                <h2>Live Weather Dashboard</h2>
+                <div class="header-divider"><span class="glow-dot"></span></div>
+                <p>Real-time conditions, hourly trends, and a 7-day outlook powered by the Open-Meteo API.</p>
+            </div>
+
+            <!-- Search & Controls -->
+            <div class="card glass-card weather-toolbar">
+                <div class="card-mini-banner banner-blue"></div>
+                <div class="weather-search">
+                    <input type="text" id="weather-input" placeholder="Search any city (e.g. Cambridge)" autocomplete="off" onkeydown="if(event.key === 'Enter') searchWeatherCity()">
+                    <button class="cta-btn" onclick="searchWeatherCity()">Search</button>
+                    <button class="btn-secondary" onclick="useMyLocation()">📍 My Location</button>
+                </div>
+                <div class="weather-toolbar-row">
+                    <div class="quick-cities" id="quick-cities">
+                        <button class="city-chip active" data-name="Islamabad" data-country="Pakistan" data-lat="33.6844" data-lon="73.0479">Islamabad</button>
+                        <button class="city-chip" data-name="Lahore" data-country="Pakistan" data-lat="31.5497" data-lon="74.3436">Lahore</button>
+                        <button class="city-chip" data-name="Karachi" data-country="Pakistan" data-lat="24.8607" data-lon="67.0011">Karachi</button>
+                        <button class="city-chip" data-name="Cambridge" data-country="United Kingdom" data-lat="52.2053" data-lon="0.1218">Cambridge</button>
+                        <button class="city-chip" data-name="Dubai" data-country="United Arab Emirates" data-lat="25.2048" data-lon="55.2708">Dubai</button>
+                        <button class="city-chip" data-name="London" data-country="United Kingdom" data-lat="51.5072" data-lon="-0.1276">London</button>
+                    </div>
+                    <div class="unit-switch">
+                        <button class="font-btn active" id="unit-c" onclick="setWeatherUnit('C')">°C</button>
+                        <button class="font-btn" id="unit-f" onclick="setWeatherUnit('F')">°F</button>
+                    </div>
+                </div>
+                <div class="weather-status" id="weather-status" role="status" aria-live="polite"></div>
+            </div>
+
+            <div class="weather-body is-loading" id="weather-body">
+                <!-- Current Conditions Hero -->
+                <div class="card glass-card weather-hero" id="weather-hero" data-wx="clear">
+                    <div class="card-mini-banner banner-orange"></div>
+                    <div class="weather-fx" id="weather-fx" aria-hidden="true"></div>
+                    <div class="weather-hero-grid">
+                        <div class="weather-main">
+                            <div class="weather-place" id="wx-place">--</div>
+                            <div class="weather-time" id="wx-time">--</div>
+                            <div class="weather-temp-row">
+                                <div class="weather-icon" id="wx-icon">⛅</div>
+                                <div class="weather-temp gradient-text" id="wx-temp">--°</div>
+                            </div>
+                            <div class="weather-cond" id="wx-cond">--</div>
+                            <div class="weather-chips">
+                                <span class="tag" id="wx-feels">Feels like --</span>
+                                <span class="tag" id="wx-hilo">H -- • L --</span>
+                            </div>
+                        </div>
+                        <div class="weather-sun">
+                            <svg viewBox="0 0 260 150" class="sun-arc" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="sunGrad" x1="0" y1="0" x2="1" y2="0">
+                                        <stop offset="0%" style="stop-color: var(--electric-blue)"></stop>
+                                        <stop offset="100%" style="stop-color: var(--vibrant-orange)"></stop>
+                                    </linearGradient>
+                                </defs>
+                                <line class="sun-horizon" x1="8" y1="130" x2="252" y2="130"></line>
+                                <path class="sun-track" d="M20 130 A110 110 0 0 1 240 130"></path>
+                                <path class="sun-progress" id="sun-progress" d="M20 130 A110 110 0 0 1 240 130" pathLength="100"></path>
+                                <circle class="sun-dot" id="sun-dot" cx="20" cy="130" r="9"></circle>
+                            </svg>
+                            <div class="sun-times">
+                                <div><span>Sunrise</span><strong id="wx-sunrise">--:--</strong></div>
+                                <div><span>Sunset</span><strong id="wx-sunset">--:--</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Metrics -->
+                <div class="weather-metrics">
+                    <div class="card glass-card metric-card">
+                        <div class="card-mini-banner banner-blue"></div>
+                        <div class="metric-head"><span class="metric-icon">💧</span><span class="metric-label">Humidity</span></div>
+                        <div class="metric-value" id="m-humidity">--</div>
+                        <div class="progress-bar"><div class="progress-fill" id="m-humidity-bar" style="width: 0%;"></div></div>
+                        <div class="metric-note" id="m-humidity-note">--</div>
+                    </div>
+                    <div class="card glass-card metric-card">
+                        <div class="card-mini-banner banner-emerald"></div>
+                        <div class="metric-head"><span class="metric-icon">🌬️</span><span class="metric-label">Wind</span></div>
+                        <div class="metric-value" id="m-wind">--</div>
+                        <div class="progress-bar"><div class="progress-fill" id="m-wind-bar" style="width: 0%;"></div></div>
+                        <div class="metric-note" id="m-wind-note">--</div>
+                    </div>
+                    <div class="card glass-card metric-card">
+                        <div class="card-mini-banner banner-orange"></div>
+                        <div class="metric-head"><span class="metric-icon">🧭</span><span class="metric-label">Pressure</span></div>
+                        <div class="metric-value" id="m-pressure">--</div>
+                        <div class="progress-bar"><div class="progress-fill" id="m-pressure-bar" style="width: 0%;"></div></div>
+                        <div class="metric-note" id="m-pressure-note">--</div>
+                    </div>
+                    <div class="card glass-card metric-card">
+                        <div class="card-mini-banner banner-orange"></div>
+                        <div class="metric-head"><span class="metric-icon">🕶️</span><span class="metric-label">UV Index</span></div>
+                        <div class="metric-value" id="m-uv">--</div>
+                        <div class="progress-bar"><div class="progress-fill" id="m-uv-bar" style="width: 0%;"></div></div>
+                        <div class="metric-note" id="m-uv-note">--</div>
+                    </div>
+                    <div class="card glass-card metric-card">
+                        <div class="card-mini-banner banner-blue"></div>
+                        <div class="metric-head"><span class="metric-icon">☁️</span><span class="metric-label">Cloud Cover</span></div>
+                        <div class="metric-value" id="m-cloud">--</div>
+                        <div class="progress-bar"><div class="progress-fill" id="m-cloud-bar" style="width: 0%;"></div></div>
+                        <div class="metric-note" id="m-cloud-note">--</div>
+                    </div>
+                    <div class="card glass-card metric-card">
+                        <div class="card-mini-banner banner-emerald"></div>
+                        <div class="metric-head"><span class="metric-icon">🌂</span><span class="metric-label">Rain Chance</span></div>
+                        <div class="metric-value" id="m-rain">--</div>
+                        <div class="progress-bar"><div class="progress-fill" id="m-rain-bar" style="width: 0%;"></div></div>
+                        <div class="metric-note" id="m-rain-note">--</div>
+                    </div>
+                </div>
+
+                <!-- Hourly Strip -->
+                <div class="card glass-card" style="margin-top: 1.5rem;">
+                    <div class="card-mini-banner banner-emerald"></div>
+                    <h3>Next 24 Hours</h3>
+                    <div class="hourly-strip" id="hourly-strip"></div>
+                </div>
+
+                <!-- Trend Chart & Weekly Forecast -->
+                <div class="grid-2">
+                    <div class="card glass-card">
+                        <div class="card-mini-banner banner-blue"></div>
+                        <h3>Temperature Trend</h3>
+                        <div class="wx-chart" id="wx-chart"></div>
+                    </div>
+                    <div class="card glass-card">
+                        <div class="card-mini-banner banner-orange"></div>
+                        <h3>7-Day Forecast</h3>
+                        <div class="daily-list" id="daily-list"></div>
+                    </div>
+                </div>
+
+                <div class="weather-credit">
+                    Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> • <span id="wx-updated">Waiting for data</span>
                 </div>
             </div>
         </section>
