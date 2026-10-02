@@ -16,6 +16,7 @@ function switchPage(pageId, element) {
 // Theme Toggle Handler supporting Dark, Light, Cyberpunk, and Emerald Palettes
 function setTheme(themeName) {
     document.body.setAttribute('data-theme', themeName);
+    document.querySelectorAll('.theme-toggle').forEach(btn => btn.classList.toggle('active', btn.dataset.theme === themeName));
 }
 
 // Dynamic Font Selection Logic
@@ -285,7 +286,8 @@ async function sendChatbotMessage() {
 }
 
 // ================= Live Weather Page (Open-Meteo API) =================
-const WX_REFRESH_MS = 10 * 60 * 1000; // auto-refresh every 10 minutes
+const WX_REFRESH_SECONDS = 30;                       // live re-sync every 30 seconds
+const WX_REFRESH_MS = WX_REFRESH_SECONDS * 1000;
 const WX_DEFAULT_PLACE = { name: "Islamabad", country: "Pakistan", lat: 33.6844, lon: 73.0479 };
 let wxPlace = WX_DEFAULT_PLACE;
 let wxData = null;
@@ -293,9 +295,18 @@ let wxUnit = "C";
 let wxStarted = false;
 let wxLastUpdate = 0;
 let wxRequestId = 0;
+let wxCountdown = WX_REFRESH_SECONDS;
 let wxShownTemp = 0;
+let wxSunFraction = 0;
 let wxTempTimer = null;
 let wxSunTimer = null;
+let wxFxKey = "";
+let wxHourlySig = "";
+let wxDailySig = "";
+let wxCities = [];
+let wxCityData = [];
+let wxWaveTimers = [];
+let wxSweepTimers = [];
 
 function wxEl(id) {
     return document.getElementById(id);
@@ -345,6 +356,11 @@ function wxT(celsius) {
     return wxUnit === "F" ? Math.round(celsius * 9 / 5 + 32) : Math.round(celsius);
 }
 
+// Temperature difference in the active unit (used for the change badges)
+function wxDiff(celsiusDiff) {
+    return wxUnit === "F" ? celsiusDiff * 9 / 5 : celsiusDiff;
+}
+
 function wxSetStatus(message, type) {
     const el = wxEl("weather-status");
     el.className = "weather-status" + (type ? " " + type : "");
@@ -361,11 +377,69 @@ function wxHourStart() {
     return index < 0 ? 0 : index;
 }
 
+function wxSamePlace(a, b) {
+    return !!a && !!b && Math.abs(a.lat - b.lat) < 0.001 && Math.abs(a.lon - b.lon) < 0.001;
+}
+
+// dawn / day / dusk / night, based on the city's own local time and sun times
+function wxSkyPhase() {
+    const cur = wxData.current;
+    const rise = wxData.daily.sunrise[0];
+    const set = wxData.daily.sunset[0];
+    if (!rise || !set) return cur.is_day ? "day" : "night";
+    const now = wxTimeToMinutes(cur.time);
+    const r = wxTimeToMinutes(rise);
+    const s = wxTimeToMinutes(set);
+    if (now >= r - 30 && now < r + 90) return "dawn";
+    if (now >= s - 90 && now < s + 30) return "dusk";
+    if (now >= r + 90 && now < s - 90) return "day";
+    return "night";
+}
+
+// ---- setTimeout colour choreography ----
+// Hero accent colours travel blue -> emerald -> orange, then settle on the weather's own colours
+function wxColorSweep() {
+    const hero = wxEl("weather-hero");
+    const stages = [
+        ["var(--electric-blue)", "var(--neon-cyan)"],
+        ["var(--emerald-green)", "var(--electric-blue)"],
+        ["var(--vibrant-orange)", "var(--emerald-green)"]
+    ];
+    wxSweepTimers.forEach(clearTimeout);
+    wxSweepTimers = [];
+    stages.forEach((stage, i) => {
+        wxSweepTimers.push(setTimeout(() => {
+            hero.style.setProperty("--wx-a", stage[0]);
+            hero.style.setProperty("--wx-b", stage[1]);
+        }, i * 450));
+    });
+    wxSweepTimers.push(setTimeout(() => {
+        hero.style.removeProperty("--wx-a");
+        hero.style.removeProperty("--wx-b");
+    }, stages.length * 450));
+}
+
+// A colour wave lights every card from the first (start) to the last (end), one after another
+function wxColorWave() {
+    const cards = document.querySelectorAll("#city-board .city-card, #weather-body .glass-card");
+    wxWaveTimers.forEach(clearTimeout);
+    wxWaveTimers = [];
+    cards.forEach((card, i) => {
+        const wave = "wave-" + (i % 3);
+        wxWaveTimers.push(setTimeout(() => card.classList.add("wx-wave", wave), i * 110));
+        wxWaveTimers.push(setTimeout(() => card.classList.remove("wx-wave", wave), i * 110 + 800));
+    });
+}
+
 // ---- Fetching ----
 async function loadWeather(place, silent) {
     const requestId = ++wxRequestId;
     const body = wxEl("weather-body");
-    if (!silent) {
+    const badge = wxEl("sync-badge");
+    if (silent) {
+        badge.classList.add("syncing");
+        wxEl("sync-text").textContent = "Syncing…";
+    } else {
         body.classList.add("is-loading");
         wxSetStatus("Fetching live weather data…", "loading");
     }
@@ -385,11 +459,15 @@ async function loadWeather(place, silent) {
         if (data.error) throw new Error(data.reason || "The weather service returned an error.");
         if (requestId !== wxRequestId) return;
 
+        const previous = wxData && wxSamePlace(wxPlace, place) ? wxData.current : null;
         wxData = data;
         wxPlace = place;
         wxLastUpdate = Date.now();
-        renderWeather();
+        wxCountdown = WX_REFRESH_SECONDS;
+        renderWeather(previous);
         wxSetStatus("");
+        wxColorSweep();
+        wxColorWave();
     } catch (err) {
         if (requestId !== wxRequestId) return;
         console.error("Weather error:", err);
@@ -398,8 +476,45 @@ async function loadWeather(place, silent) {
             wxSetStatus(offline ? "Can't reach the weather service. Check your internet connection and try again." : err.message, "error");
         }
     } finally {
-        if (requestId === wxRequestId) body.classList.remove("is-loading");
+        if (requestId === wxRequestId) {
+            body.classList.remove("is-loading");
+            badge.classList.remove("syncing");
+            updateSyncBadge();
+        }
     }
+}
+
+// One request fetches all four city cards at once
+async function loadCityBoard() {
+    if (!wxCities.length) return;
+    const url = "https://api.open-meteo.com/v1/forecast" +
+        "?latitude=" + wxCities.map(c => c.lat).join(",") +
+        "&longitude=" + wxCities.map(c => c.lon).join(",") +
+        "&current=temperature_2m,relative_humidity_2m,weather_code,is_day" +
+        "&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1";
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("City board request failed (status " + response.status + ").");
+        const data = await response.json();
+        const list = Array.isArray(data) ? data : [data];
+        const previous = wxCityData;
+        wxCityData = list.map(d => ({
+            temp: d.current.temperature_2m,
+            code: d.current.weather_code,
+            isDay: d.current.is_day,
+            humidity: d.current.relative_humidity_2m,
+            max: d.daily.temperature_2m_max[0],
+            min: d.daily.temperature_2m_min[0]
+        }));
+        renderCityBoard(previous);
+    } catch (err) {
+        console.error("City board error:", err);
+    }
+}
+
+function refreshWeather() {
+    loadWeather(wxPlace, true);
+    loadCityBoard();
 }
 
 async function searchWeatherCity() {
@@ -442,16 +557,21 @@ function setWeatherUnit(unit) {
     wxUnit = unit;
     wxEl("unit-c").classList.toggle("active", unit === "C");
     wxEl("unit-f").classList.toggle("active", unit === "F");
-    if (wxData) renderWxTemps();
+    if (wxData) renderWxTemps(false);
+    if (wxCityData.length) renderCityBoard(null);
 }
 
 // ---- Rendering ----
-function renderWeather() {
+// `previous` is the last reading for the same city (a live refresh); null means a fresh city load
+function renderWeather(previous) {
     if (!wxData) return;
+    const refresh = !!previous;
     const cur = wxData.current;
     const info = wxDescribe(cur.weather_code, cur.is_day);
     const hero = wxEl("weather-hero");
+    const phase = wxSkyPhase();
     hero.dataset.wx = info.theme;
+    hero.dataset.sky = phase;
 
     wxEl("wx-place").textContent = wxPlace.name + (wxPlace.country ? ", " + wxPlace.country : "");
     const dateLabel = new Date(cur.time.slice(0, 10) + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
@@ -459,16 +579,38 @@ function renderWeather() {
     wxEl("wx-icon").textContent = info.icon;
     wxEl("wx-cond").textContent = info.label;
 
-    renderWxFx(info.theme);
-    renderWxSun();
-    renderWxMetrics();
-    renderWxTemps();
-    updateWxChips();
+    const fxKey = info.theme + "|" + phase;
+    if (!refresh || fxKey !== wxFxKey) renderWxFx(info.theme, phase);
+    wxFxKey = fxKey;
+
+    renderWxSun(refresh);
+    renderWxMetrics(refresh);
+    renderWxTemps(refresh);
+    renderWxDelta(previous);
+    updateWxCards();
     updateWxStamp();
 }
 
+// Change badge: shows how the temperature moved since the previous sync
+function renderWxDelta(previous) {
+    const el = wxEl("wx-delta");
+    if (!previous) {
+        el.className = "tag wx-delta";
+        el.textContent = "";
+        return;
+    }
+    const diff = wxDiff(wxData.current.temperature_2m - previous.temperature_2m);
+    if (Math.abs(diff) < 0.05) {
+        el.className = "tag wx-delta steady";
+        el.textContent = "● Steady";
+    } else {
+        el.className = "tag wx-delta " + (diff > 0 ? "up" : "down");
+        el.textContent = (diff > 0 ? "▲ +" : "▼ -") + Math.abs(diff).toFixed(1) + "° since last sync";
+    }
+}
+
 // Everything that depends on the °C / °F choice
-function renderWxTemps() {
+function renderWxTemps(refresh) {
     const cur = wxData.current;
     const daily = wxData.daily;
     wxEl("wx-feels").textContent = "Feels like " + wxT(cur.apparent_temperature) + "°";
@@ -481,12 +623,20 @@ function renderWxTemps() {
         wxEl("wx-temp").textContent = Math.round(from + (target - from) * p) + "°" + wxUnit;
     }, () => { wxShownTemp = target; });
 
-    renderWxHourly();
-    renderWxChart();
-    renderWxDaily();
+    const hourlySig = wxUnit + "|" + wxPlace.lat + "|" + wxPlace.lon + "|" + wxHourStart() + "|" + wxData.hourly.temperature_2m.join(",") + "|" + wxData.hourly.weather_code.join(",");
+    if (!refresh || hourlySig !== wxHourlySig) {
+        wxHourlySig = hourlySig;
+        renderWxHourly();
+        renderWxChart();
+    }
+    const dailySig = wxUnit + "|" + wxPlace.lat + "|" + wxPlace.lon + "|" + daily.temperature_2m_max.join(",") + "|" + daily.temperature_2m_min.join(",") + "|" + daily.weather_code.join(",");
+    if (!refresh || dailySig !== wxDailySig) {
+        wxDailySig = dailySig;
+        renderWxDaily();
+    }
 }
 
-function renderWxFx(theme) {
+function renderWxFx(theme, phase) {
     let html = "";
     if (theme === "rain" || theme === "storm") {
         for (let i = 0; i < 22; i++) {
@@ -496,11 +646,15 @@ function renderWxFx(theme) {
         for (let i = 0; i < 18; i++) {
             html += '<i class="wx-flake" style="left:' + (Math.random() * 100).toFixed(1) + "%;animation-duration:" + (4 + Math.random() * 4).toFixed(2) + "s;animation-delay:-" + (Math.random() * 6).toFixed(2) + 's"></i>';
         }
+    } else if (phase === "night") {
+        for (let i = 0; i < 16; i++) {
+            html += '<i class="wx-star" style="left:' + (Math.random() * 100).toFixed(1) + "%;top:" + (Math.random() * 70).toFixed(1) + "%;animation-delay:-" + (Math.random() * 3).toFixed(2) + 's"></i>';
+        }
     }
     wxEl("weather-fx").innerHTML = html;
 }
 
-function renderWxSun() {
+function renderWxSun(refresh) {
     const cur = wxData.current;
     const rise = wxData.daily.sunrise[0];
     const set = wxData.daily.sunset[0];
@@ -514,13 +668,15 @@ function renderWxSun() {
 
     const raw = (wxTimeToMinutes(cur.time) - wxTimeToMinutes(rise)) / (wxTimeToMinutes(set) - wxTimeToMinutes(rise));
     const fraction = Math.min(Math.max(raw, 0), 1);
+    const from = refresh ? wxSunFraction : 0;
+    wxSunFraction = fraction;
     const dot = wxEl("sun-dot");
     const progress = wxEl("sun-progress");
     dot.classList.toggle("night", raw < 0 || raw > 1);
 
     clearInterval(wxSunTimer);
-    wxSunTimer = wxTween(1200, p => {
-        const v = fraction * p;
+    wxSunTimer = wxTween(refresh ? 600 : 1200, p => {
+        const v = from + (fraction - from) * p;
         const angle = Math.PI * (1 - v);
         dot.setAttribute("cx", (130 + 110 * Math.cos(angle)).toFixed(1));
         dot.setAttribute("cy", (130 - 110 * Math.sin(angle)).toFixed(1));
@@ -528,15 +684,27 @@ function renderWxSun() {
     });
 }
 
-function wxSetMetric(key, value, percent, note) {
-    wxEl("m-" + key).textContent = value;
+function wxSetMetric(key, value, percent, note, refresh) {
+    const valueEl = wxEl("m-" + key);
+    const changed = refresh && valueEl.textContent !== value;
+    valueEl.textContent = value;
     wxEl("m-" + key + "-note").textContent = note;
+
     const bar = wxEl("m-" + key + "-bar");
-    bar.style.width = "0%";
-    setTimeout(() => { bar.style.width = Math.min(Math.max(percent, 0), 100) + "%"; }, 80);
+    const width = Math.min(Math.max(percent, 0), 100) + "%";
+    if (refresh) {
+        bar.style.width = width;
+    } else {
+        bar.style.width = "0%";
+        setTimeout(() => { bar.style.width = width; }, 80);
+    }
+    if (changed) {
+        valueEl.classList.add("flash");
+        setTimeout(() => valueEl.classList.remove("flash"), 1300);
+    }
 }
 
-function renderWxMetrics() {
+function renderWxMetrics(refresh) {
     const c = wxData.current;
     const d = wxData.daily;
     const compass = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
@@ -547,12 +715,12 @@ function renderWxMetrics() {
     const rain = d.precipitation_probability_max && d.precipitation_probability_max[0] != null ? d.precipitation_probability_max[0] : 0;
     const uvLabel = uv < 3 ? "Low" : uv < 6 ? "Moderate" : uv < 8 ? "High" : uv < 11 ? "Very high" : "Extreme";
 
-    wxSetMetric("humidity", humidity + "%", humidity, humidity < 30 ? "Dry air" : humidity < 60 ? "Comfortable" : "Humid");
-    wxSetMetric("wind", Math.round(c.wind_speed_10m) + " km/h", c.wind_speed_10m / 60 * 100, "From the " + direction);
-    wxSetMetric("pressure", Math.round(pressure) + " hPa", (pressure - 980) / 70 * 100, pressure < 1009 ? "Low pressure" : pressure > 1022 ? "High pressure" : "Normal range");
-    wxSetMetric("uv", uv.toFixed(1), uv / 11 * 100, uvLabel + " today");
-    wxSetMetric("cloud", c.cloud_cover + "%", c.cloud_cover, c.cloud_cover < 20 ? "Clear skies" : c.cloud_cover < 60 ? "Partly cloudy" : "Mostly cloudy");
-    wxSetMetric("rain", rain + "%", rain, c.precipitation > 0 ? c.precipitation + " mm falling now" : "No rain right now");
+    wxSetMetric("humidity", humidity + "%", humidity, humidity < 30 ? "Dry air" : humidity < 60 ? "Comfortable" : "Humid", refresh);
+    wxSetMetric("wind", Math.round(c.wind_speed_10m) + " km/h", c.wind_speed_10m / 60 * 100, "From the " + direction, refresh);
+    wxSetMetric("pressure", Math.round(pressure) + " hPa", (pressure - 980) / 70 * 100, pressure < 1009 ? "Low pressure" : pressure > 1022 ? "High pressure" : "Normal range", refresh);
+    wxSetMetric("uv", uv.toFixed(1), uv / 11 * 100, uvLabel + " today", refresh);
+    wxSetMetric("cloud", c.cloud_cover + "%", c.cloud_cover, c.cloud_cover < 20 ? "Clear skies" : c.cloud_cover < 60 ? "Partly cloudy" : "Mostly cloudy", refresh);
+    wxSetMetric("rain", rain + "%", rain, c.precipitation > 0 ? c.precipitation + " mm falling now" : "No rain right now", refresh);
 }
 
 function renderWxHourly() {
@@ -662,39 +830,106 @@ function renderWxDaily() {
     wxEl("daily-list").innerHTML = html;
 }
 
-function updateWxChips() {
-    document.querySelectorAll("#quick-cities .city-chip").forEach(chip => {
-        chip.classList.toggle("active", chip.dataset.name === wxPlace.name);
+// ---- City board (Islamabad, Lahore, Faisalabad, Karachi) ----
+function initCityBoard() {
+    wxCities = Array.from(document.querySelectorAll("#city-board .city-card")).map(el => ({
+        el: el,
+        name: el.dataset.name,
+        country: el.dataset.country,
+        lat: parseFloat(el.dataset.lat),
+        lon: parseFloat(el.dataset.lon)
+    }));
+    wxEl("city-board").addEventListener("click", e => {
+        const card = e.target.closest(".city-card");
+        if (!card) return;
+        const city = wxCities.find(c => c.el === card);
+        if (city) loadWeather({ name: city.name, country: city.country, lat: city.lat, lon: city.lon });
     });
 }
 
+function renderCityBoard(previous) {
+    wxCities.forEach((city, i) => {
+        const d = wxCityData[i];
+        if (!d) return;
+        const q = sel => city.el.querySelector(sel);
+        const info = wxDescribe(d.code, d.isDay);
+        const tempEl = q(".city-temp");
+        const deltaEl = q(".city-delta");
+        const before = previous && previous[i] ? previous[i] : null;
+
+        const text = wxT(d.temp) + "°" + wxUnit;
+        const changed = before && tempEl.textContent !== "--°" && wxT(before.temp) !== wxT(d.temp);
+        tempEl.textContent = text;
+        q(".city-icon").textContent = info.icon;
+        q(".city-cond").textContent = info.label;
+        q(".city-hum").textContent = "💧 " + d.humidity + "%";
+        q(".city-hilo").textContent = "H " + wxT(d.max) + "° L " + wxT(d.min) + "°";
+
+        if (before && Math.abs(d.temp - before.temp) >= 0.05) {
+            const diff = wxDiff(d.temp - before.temp);
+            deltaEl.className = "city-delta " + (diff > 0 ? "up" : "down");
+            deltaEl.textContent = (diff > 0 ? "▲ +" : "▼ -") + Math.abs(diff).toFixed(1);
+        } else {
+            deltaEl.className = "city-delta";
+            deltaEl.textContent = "";
+        }
+        if (changed) {
+            tempEl.classList.add("flash");
+            setTimeout(() => tempEl.classList.remove("flash"), 1300);
+        }
+    });
+}
+
+function updateWxCards() {
+    wxCities.forEach(city => {
+        city.el.classList.toggle("active", wxSamePlace(city, wxPlace));
+    });
+}
+
+// ---- Live sync clock ----
 function updateWxStamp() {
     const el = wxEl("wx-updated");
     if (!wxLastUpdate) {
         el.textContent = "Waiting for data";
         return;
     }
-    const mins = Math.floor((Date.now() - wxLastUpdate) / 60000);
-    el.textContent = mins < 1 ? "Updated just now" : "Updated " + mins + " min ago";
+    const secs = Math.floor((Date.now() - wxLastUpdate) / 1000);
+    el.textContent = secs < 5 ? "Synced just now" : secs < 60 ? "Synced " + secs + "s ago" : "Synced " + Math.floor(secs / 60) + " min ago";
 }
 
-// Called whenever the Weather tab opens: loads once, then keeps itself fresh (setInterval)
+function updateSyncBadge() {
+    const ring = wxEl("sync-ring");
+    const text = wxEl("sync-text");
+    if (!ring || !text) return;
+    ring.style.strokeDashoffset = (100 * (1 - wxCountdown / WX_REFRESH_SECONDS)).toFixed(1);
+    if (!wxEl("sync-badge").classList.contains("syncing")) text.textContent = "Next sync " + wxCountdown + "s";
+}
+
+// Runs every second (setInterval): counts down to the next live sync, only while the Weather tab is open
+function wxTick() {
+    updateWxStamp();
+    if (!wxEl("weather").classList.contains("active") || document.hidden) return;
+    wxCountdown--;
+    if (wxCountdown <= 0) {
+        wxCountdown = WX_REFRESH_SECONDS;
+        refreshWeather();
+    }
+    updateSyncBadge();
+}
+
+// Called whenever the Weather tab opens: loads once, then keeps itself fresh
 function startWeatherPage() {
     if (wxStarted) {
-        if (Date.now() - wxLastUpdate > WX_REFRESH_MS) loadWeather(wxPlace, true);
+        if (Date.now() - wxLastUpdate > WX_REFRESH_MS) {
+            wxCountdown = WX_REFRESH_SECONDS;
+            refreshWeather();
+        }
+        wxColorWave();
         return;
     }
     wxStarted = true;
-
-    wxEl("quick-cities").addEventListener("click", e => {
-        const chip = e.target.closest(".city-chip");
-        if (!chip) return;
-        loadWeather({ name: chip.dataset.name, country: chip.dataset.country, lat: parseFloat(chip.dataset.lat), lon: parseFloat(chip.dataset.lon) });
-    });
-
+    initCityBoard();
     loadWeather(wxPlace);
-    setInterval(updateWxStamp, 30000);
-    setInterval(() => {
-        if (!document.hidden && wxEl("weather").classList.contains("active")) loadWeather(wxPlace, true);
-    }, WX_REFRESH_MS);
+    loadCityBoard();
+    setInterval(wxTick, 1000);
 }

@@ -35,14 +35,16 @@
                     <li><button class="nav-btn" onclick="switchPage('weather', this)">Weather</button></li>
                 </ul>
             </nav>
-            <div class="controls-group">
-                <button class="theme-toggle" onclick="setTheme('dark')" title="Dark Theme">🌙 Dark</button>
-                <button class="theme-toggle" onclick="setTheme('light')" title="Light Theme">☀️ Light</button>
-                <button class="theme-toggle" onclick="setTheme('cyberpunk')" title="Cyberpunk Theme">⚡ Neon</button>
-                <button class="theme-toggle" onclick="setTheme('emerald')" title="Emerald Theme">🌿 Emerald</button>
-            </div>
         </div>
     </header>
+
+    <!-- Theme Dock (fixed in place, never scrolls with the page) -->
+    <div class="controls-group theme-dock" aria-label="Theme switcher">
+        <button class="theme-toggle active" data-theme="dark" onclick="setTheme('dark')" title="Dark Theme"><span class="theme-emoji">🌙</span><span class="theme-name">Dark</span></button>
+        <button class="theme-toggle" data-theme="light" onclick="setTheme('light')" title="Light Theme"><span class="theme-emoji">☀️</span><span class="theme-name">Light</span></button>
+        <button class="theme-toggle" data-theme="cyberpunk" onclick="setTheme('cyberpunk')" title="Cyberpunk Theme"><span class="theme-emoji">⚡</span><span class="theme-name">Neon</span></button>
+        <button class="theme-toggle" data-theme="emerald" onclick="setTheme('emerald')" title="Emerald Theme"><span class="theme-emoji">🌿</span><span class="theme-name">Emerald</span></button>
+    </div>
 
     <main>
         <!-- Page 1: Home -->
@@ -509,14 +511,7 @@
                     <button class="btn-secondary" onclick="useMyLocation()">📍 My Location</button>
                 </div>
                 <div class="weather-toolbar-row">
-                    <div class="quick-cities" id="quick-cities">
-                        <button class="city-chip active" data-name="Islamabad" data-country="Pakistan" data-lat="33.6844" data-lon="73.0479">Islamabad</button>
-                        <button class="city-chip" data-name="Lahore" data-country="Pakistan" data-lat="31.5497" data-lon="74.3436">Lahore</button>
-                        <button class="city-chip" data-name="Karachi" data-country="Pakistan" data-lat="24.8607" data-lon="67.0011">Karachi</button>
-                        <button class="city-chip" data-name="Cambridge" data-country="United Kingdom" data-lat="52.2053" data-lon="0.1218">Cambridge</button>
-                        <button class="city-chip" data-name="Dubai" data-country="United Arab Emirates" data-lat="25.2048" data-lon="55.2708">Dubai</button>
-                        <button class="city-chip" data-name="London" data-country="United Kingdom" data-lat="51.5072" data-lon="-0.1276">London</button>
-                    </div>
+                    <div class="toolbar-hint">Live data • refreshes every 30 seconds</div>
                     <div class="unit-switch">
                         <button class="font-btn active" id="unit-c" onclick="setWeatherUnit('C')">°C</button>
                         <button class="font-btn" id="unit-f" onclick="setWeatherUnit('F')">°F</button>
@@ -525,11 +520,44 @@
                 <div class="weather-status" id="weather-status" role="status" aria-live="polite"></div>
             </div>
 
+            <!-- Four-City Live Board -->
+            <div class="city-board" id="city-board">
+                <button class="glass-card city-card active" data-name="Islamabad" data-country="Pakistan" data-lat="33.6844" data-lon="73.0479">
+                    <div class="city-top"><span class="city-name">Islamabad</span><span class="city-icon">⛅</span></div>
+                    <div class="city-temp-row"><span class="city-temp">--°</span><span class="city-delta"></span></div>
+                    <div class="city-cond">--</div>
+                    <div class="city-foot"><span class="city-hum">💧 --%</span><span class="city-hilo">H -- L --</span></div>
+                </button>
+                <button class="glass-card city-card" data-name="Lahore" data-country="Pakistan" data-lat="31.5497" data-lon="74.3436">
+                    <div class="city-top"><span class="city-name">Lahore</span><span class="city-icon">⛅</span></div>
+                    <div class="city-temp-row"><span class="city-temp">--°</span><span class="city-delta"></span></div>
+                    <div class="city-cond">--</div>
+                    <div class="city-foot"><span class="city-hum">💧 --%</span><span class="city-hilo">H -- L --</span></div>
+                </button>
+                <button class="glass-card city-card" data-name="Faisalabad" data-country="Pakistan" data-lat="31.4504" data-lon="73.1350">
+                    <div class="city-top"><span class="city-name">Faisalabad</span><span class="city-icon">⛅</span></div>
+                    <div class="city-temp-row"><span class="city-temp">--°</span><span class="city-delta"></span></div>
+                    <div class="city-cond">--</div>
+                    <div class="city-foot"><span class="city-hum">💧 --%</span><span class="city-hilo">H -- L --</span></div>
+                </button>
+                <button class="glass-card city-card" data-name="Karachi" data-country="Pakistan" data-lat="24.8607" data-lon="67.0011">
+                    <div class="city-top"><span class="city-name">Karachi</span><span class="city-icon">⛅</span></div>
+                    <div class="city-temp-row"><span class="city-temp">--°</span><span class="city-delta"></span></div>
+                    <div class="city-cond">--</div>
+                    <div class="city-foot"><span class="city-hum">💧 --%</span><span class="city-hilo">H -- L --</span></div>
+                </button>
+            </div>
+
             <div class="weather-body is-loading" id="weather-body">
                 <!-- Current Conditions Hero -->
-                <div class="card glass-card weather-hero" id="weather-hero" data-wx="clear">
+                <div class="card glass-card weather-hero" id="weather-hero" data-wx="clear" data-sky="day">
                     <div class="card-mini-banner banner-orange"></div>
+                    <div class="weather-sky" aria-hidden="true"><i class="sky sky-dawn"></i><i class="sky sky-day"></i><i class="sky sky-dusk"></i><i class="sky sky-night"></i></div>
                     <div class="weather-fx" id="weather-fx" aria-hidden="true"></div>
+                    <div class="sync-badge" id="sync-badge" title="Live data re-syncs every 30 seconds">
+                        <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="sync-bg" cx="18" cy="18" r="15" pathLength="100"></circle><circle class="sync-ring" id="sync-ring" cx="18" cy="18" r="15" pathLength="100"></circle></svg>
+                        <span id="sync-text">Next sync 30s</span>
+                    </div>
                     <div class="weather-hero-grid">
                         <div class="weather-main">
                             <div class="weather-place" id="wx-place">--</div>
@@ -542,6 +570,7 @@
                             <div class="weather-chips">
                                 <span class="tag" id="wx-feels">Feels like --</span>
                                 <span class="tag" id="wx-hilo">H -- • L --</span>
+                                <span class="tag wx-delta" id="wx-delta"></span>
                             </div>
                         </div>
                         <div class="weather-sun">
