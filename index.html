@@ -33,6 +33,7 @@
                     <li><button class="nav-btn" onclick="switchPage('achievements', this)">Achievements</button></li>
                     <li><button class="nav-btn" onclick="switchPage('activities', this)">Activities</button></li>
                     <li><button class="nav-btn" onclick="switchPage('weather', this)">Weather</button></li>
+                    <li><button class="nav-btn" onclick="switchPage('contacts', this)">Contacts</button></li>
                 </ul>
             </nav>
         </div>
@@ -41,7 +42,7 @@
     <!-- Theme Dock (fixed in place, never scrolls with the page) -->
     <div class="controls-group theme-dock" aria-label="Theme switcher">
         <button class="theme-toggle active" data-theme="dark" onclick="setTheme('dark')" title="Dark Theme"><span class="theme-emoji">🌙</span><span class="theme-name">Dark</span></button>
-        <button class="theme-toggle" data-theme="light" onclick="setTheme('light')" title="Light Theme"><span class="theme-emoji">☀️</span><span class="theme-name">Light</span></button>
+        <button class="theme-toggle" data-theme="light" onclick="setTheme('light')" title="Light Theme"><span class="theme-emoji">☀️️</span><span class="theme-name">Light</span></button>
         <button class="theme-toggle" data-theme="cyberpunk" onclick="setTheme('cyberpunk')" title="Cyberpunk Theme"><span class="theme-emoji">⚡</span><span class="theme-name">Neon</span></button>
         <button class="theme-toggle" data-theme="emerald" onclick="setTheme('emerald')" title="Emerald Theme"><span class="theme-emoji">🌿</span><span class="theme-name">Emerald</span></button>
     </div>
@@ -663,6 +664,48 @@
 
                 <div class="weather-credit">
                     Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> • <span id="wx-updated">Waiting for data</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page 7: Contacts -->
+        <section id="contacts" class="page-view">
+            <div class="detailed-header">
+                <h2>Contact Me</h2>
+                <div class="header-divider"><span class="glow-dot"></span></div>
+                <p>Send a direct message or feedback. Your message will be logged immediately and delivered directly to my email contact list.</p>
+            </div>
+
+            <div class="contact-container">
+                <form id="contact-form" class="card glass-card contact-form" onsubmit="handleContactSubmit(event)">
+                    <div class="card-mini-banner banner-emerald"></div>
+                    
+                    <div class="form-group">
+                        <label for="contact-name">Your Name</label>
+                        <input type="text" id="contact-name" name="name" placeholder="e.g. Alex Smith" required autocomplete="name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact-email">Email Address</label>
+                        <input type="email" id="contact-email" name="email" placeholder="e.g. alex@example.com" required autocomplete="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact-message">Your Message</label>
+                        <textarea id="contact-message" name="message" rows="5" placeholder="Write your message here..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="cta-btn send-btn">Send Message 🚀</button>
+                </form>
+
+                <div id="contact-thankyou" class="card glass-card contact-thankyou" style="display: none;">
+                    <div class="card-mini-banner banner-blue"></div>
+                    <div class="thankyou-content">
+                        <div class="thankyou-icon">✨</div>
+                        <h3 class="gradient-text">Thank You!</h3>
+                        <p>Your message has been successfully received and sent to my email inbox.</p>
+                        <div class="timer-pill">Form will reappear in <span id="contact-countdown">2</span>s</div>
+                    </div>
                 </div>
             </div>
         </section>

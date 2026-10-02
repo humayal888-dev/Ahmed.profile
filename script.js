@@ -24,6 +24,56 @@ function changeFont(fontFamily) {
     document.documentElement.style.setProperty('--font-main', fontFamily);
 }
 
+// Contact Form Handler with Mailto submission & setInterval-based disappearance timing
+const contactMessagesList = [];
+
+function handleContactSubmit(event) {
+    event.preventDefault();
+
+    const nameInput = document.getElementById('contact-name');
+    const emailInput = document.getElementById('contact-email');
+    const messageInput = document.getElementById('contact-message');
+    const formEl = document.getElementById('contact-form');
+    const thankyouEl = document.getElementById('contact-thankyou');
+    const countdownEl = document.getElementById('contact-countdown');
+
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const message = messageInput.value.trim();
+
+    if (!name || !email || !message) return;
+
+    // Save contact submission internally
+    contactMessagesList.push({ name, email, message, date: new Date().toISOString() });
+
+    // Open user's email client to send message to developer email
+    const mailtoSubject = encodeURIComponent(`Portfolio Message from ${name}`);
+    const mailtoBody = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
+    window.location.href = `mailto:humayal.contact@example.com?subject=${mailtoSubject}&body=${mailtoBody}`;
+
+    // Disappear contact form and display thank you banner immediately
+    formEl.style.display = 'none';
+    thankyouEl.style.display = 'block';
+
+    let secondsLeft = 2;
+    countdownEl.textContent = secondsLeft;
+
+    // Use setInterval to handle 2-second thank-you display before reopening form
+    const timer = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft > 0) {
+            countdownEl.textContent = secondsLeft;
+        } else {
+            clearInterval(timer);
+            
+            // Disappear thank you card, reset form fields, and reappear contact form
+            thankyouEl.style.display = 'none';
+            formEl.reset();
+            formEl.style.display = 'block';
+        }
+    }, 1000);
+}
+
 // ================= Timer-Powered Effects (setTimeout & setInterval) =================
 const TYPEWRITER_SENTENCES = [
     "Web Developer & Academic Achiever",
