@@ -24,54 +24,241 @@ function changeFont(fontFamily) {
     document.documentElement.style.setProperty('--font-main', fontFamily);
 }
 
-// Contact Form Handler with Mailto submission & setInterval-based disappearance timing
-const contactMessagesList = [];
+// Contact Form: delivers the message to your email, shows a thank-you, then the form returns
+// No API key needed. Just type YOUR email address on the line below (that is where messages will arrive).
+// Delivery uses FormSubmit (https://formsubmit.co), a free email-forwarding service.
+const CONTACT_EMAIL = "humayal.888@gmail.com";
+const CONTACT_ENDPOINT = "https://formsubmit.co/ajax/";
+const CONTACT_THANKS_SECONDS = 2;   // how long the thank-you stays before the form comes back
+const CF_DEFAULT_TOPIC = "Just Saying Hi";
+let cfTopic = CF_DEFAULT_TOPIC;
+let cfSending = false;
+let cfThanksTimer = null;
+let cfTypingTimer = null;
 
-function handleContactSubmit(event) {
-    event.preventDefault();
+function cfEl(id) {
+    return document.getElementById(id);
+}
 
-    const nameInput = document.getElementById('contact-name');
-    const emailInput = document.getElementById('contact-email');
-    const messageInput = document.getElementById('contact-message');
-    const formEl = document.getElementById('contact-form');
-    const thankyouEl = document.getElementById('contact-thankyou');
-    const countdownEl = document.getElementById('contact-countdown');
+function cfSetStatus(message, type) {
+    const el = cfEl("cf-status");
+    el.className = "weather-status" + (type ? " " + type : "");
+    el.textContent = message || "";
+}
 
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim();
-    const message = messageInput.value.trim();
+// Steps list: everything before `n` is done, `n` is current (n = 4 marks all done)
+function cfSetStep(n) {
+    document.querySelectorAll("#contact-steps li").forEach(li => {
+        const step = parseInt(li.dataset.step, 10);
+        li.classList.toggle("done", step < n);
+        li.classList.toggle("current", step === n);
+    });
+}
 
-    if (!name || !email || !message) return;
+function cfConfigured() {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(CONTACT_EMAIL) && CONTACT_EMAIL.indexOf("YOUR_EMAIL") === -1;
+}
 
-    // Save contact submission internally
-    contactMessagesList.push({ name, email, message, date: new Date().toISOString() });
+// Setup hints are only shown to you while testing locally; live visitors get a friendly message instead
+function cfIsLocal() {
+    return ["", "localhost", "127.0.0.1"].indexOf(window.location.hostname) !== -1;
+}
 
-    // Open user's email client to send message to developer email
-    const mailtoSubject = encodeURIComponent(`Portfolio Message from ${name}`);
-    const mailtoBody = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
-    window.location.href = `mailto:humayal.contact@example.com?subject=${mailtoSubject}&body=${mailtoBody}`;
+// Checks the three fields; `show` also reveals the error messages
+function cfValidate(show) {
+    const name = cfEl("cf-name").value.trim();
+    const email = cfEl("cf-email").value.trim();
+    const message = cfEl("cf-message").value.trim();
+    const checks = [
+        { id: "name", ok: name.length >= 2, error: "Please enter your name." },
+        { id: "email", ok: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email), error: "Please enter a valid email so I can reply." },
+        { id: "message", ok: message.length >= 1, error: "Please write a message." }
+    ];
 
-    // Disappear contact form and display thank you banner immediately
-    formEl.style.display = 'none';
-    thankyouEl.style.display = 'block';
-
-    let secondsLeft = 2;
-    countdownEl.textContent = secondsLeft;
-
-    // Use setInterval to handle 2-second thank-you display before reopening form
-    const timer = setInterval(() => {
-        secondsLeft--;
-        if (secondsLeft > 0) {
-            countdownEl.textContent = secondsLeft;
-        } else {
-            clearInterval(timer);
-            
-            // Disappear thank you card, reset form fields, and reappear contact form
-            thankyouEl.style.display = 'none';
-            formEl.reset();
-            formEl.style.display = 'block';
+    checks.forEach(c => {
+        const field = cfEl("cf-" + c.id + "-field");
+        field.classList.toggle("valid", c.ok);
+        if (c.ok) {
+            field.classList.remove("invalid");
+            cfEl("cf-" + c.id + "-error").textContent = "";
+        } else if (show) {
+            field.classList.add("invalid");
+            cfEl("cf-" + c.id + "-error").textContent = c.error;
         }
-    }, 1000);
+    });
+
+    const done = checks.filter(c => c.ok).length;
+    const percent = Math.round(done / checks.length * 100);
+    cfEl("cf-progress-fill").style.width = percent + "%";
+    cfEl("cf-progress-text").textContent = percent + "%";
+    const send = cfEl("cf-send");
+    send.classList.toggle("ready", done === checks.length);
+    send.classList.toggle("not-ready", done !== checks.length);
+    if (!cfEl("contact-form").hidden && !cfSending) cfSetStep(done === checks.length ? 2 : 1);
+    return done === checks.length;
+}
+
+// Live preview bubble mirrors what the visitor types (the typing dots use setTimeout)
+function cfUpdatePreview() {
+    const name = cfEl("cf-name").value.trim();
+    const message = cfEl("cf-message").value;
+    cfEl("pv-name").textContent = name || "Your name";
+    cfEl("pv-avatar").textContent = name ? name.charAt(0).toUpperCase() : "?";
+    cfEl("pv-topic").textContent = cfTopic;
+    const bubble = cfEl("pv-bubble");
+    bubble.textContent = message.trim() ? message : "Your message will appear here as you type.";
+    bubble.classList.toggle("empty", !message.trim());
+
+    const typing = cfEl("pv-typing");
+    typing.classList.add("active");
+    clearTimeout(cfTypingTimer);
+    cfTypingTimer = setTimeout(() => typing.classList.remove("active"), 1200);
+}
+
+function initContactForm() {
+    if (!cfEl("contact-form")) return;
+    ["cf-name", "cf-email", "cf-message"].forEach(id => {
+        cfEl(id).addEventListener("input", () => {
+            cfValidate(false);
+            cfUpdatePreview();
+        });
+    });
+
+    cfEl("cf-topics").addEventListener("click", e => {
+        const chip = e.target.closest(".topic-chip");
+        if (!chip) return;
+        document.querySelectorAll(".topic-chip").forEach(c => c.classList.toggle("active", c === chip));
+        cfTopic = chip.dataset.topic;
+        cfEl("contact-grid").dataset.accent = chip.dataset.accent;
+        cfUpdatePreview();
+    });
+}
+document.addEventListener("DOMContentLoaded", initContactForm);
+
+async function handleContactSubmit(event) {
+    event.preventDefault();
+    if (cfSending) return false;
+    if (cfEl("cf-honey").value) return false; // bots fill the hidden field
+
+    const form = cfEl("contact-form");
+    if (!cfValidate(true)) {
+        cfSetStatus("Please complete the highlighted fields.", "error");
+        form.classList.remove("shake");
+        void form.offsetWidth;
+        form.classList.add("shake");
+        setTimeout(() => form.classList.remove("shake"), 450);
+        return false;
+    }
+    if (!cfConfigured()) {
+        console.warn("Contact form: type your email address into CONTACT_EMAIL in script.js.");
+        cfSetStatus(cfIsLocal() ? "Setup needed: type your email address into CONTACT_EMAIL at the top of the contact section in script.js." : "Sorry, messages can't be sent right now. Please try again later.", "error");
+        return false;
+    }
+
+    const name = cfEl("cf-name").value.trim();
+    const email = cfEl("cf-email").value.trim();
+    const message = cfEl("cf-message").value.trim();
+    const send = cfEl("cf-send");
+
+    cfSending = true;
+    send.classList.add("sending");
+    send.querySelector(".send-label").textContent = "Sending…";
+    cfSetStatus("Delivering your message…", "loading");
+
+    try {
+        const response = await fetch(CONTACT_ENDPOINT + CONTACT_EMAIL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                topic: cfTopic,
+                message: message,
+                _subject: "Portfolio message (" + cfTopic + ") from " + name,
+                _template: "table",
+                _captcha: "false"
+            })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !(data.success === true || data.success === "true")) {
+            throw new Error(data.message || "The message could not be sent. Please try again.");
+        }
+        cfSetStatus("");
+        showContactThanks(name);
+    } catch (err) {
+        console.error("Contact form error:", err);
+        cfSetStatus(err instanceof TypeError ? "Can't reach the mail service. Check your internet connection and try again." : "Sorry, your message couldn't be sent. Please try again in a moment.", "error");
+    } finally {
+        cfSending = false;
+        send.classList.remove("sending");
+        send.querySelector(".send-label").textContent = "Send Message";
+    }
+    return false;
+}
+
+// Form fades out -> thank-you appears -> setInterval counts 4..0 -> thank-you disappears and the form returns
+function showContactThanks(name) {
+    const form = cfEl("contact-form");
+    const thanks = cfEl("contact-thankyou");
+    const firstName = name.split(" ")[0];
+    cfSetStep(3);
+    form.classList.add("is-leaving");
+
+    setTimeout(() => {
+        form.hidden = true;
+        form.classList.remove("is-leaving");
+        cfEl("thanks-title").textContent = "Thank you, " + firstName + "!";
+        thanks.hidden = false;
+
+        let remaining = CONTACT_THANKS_SECONDS;
+        const ring = cfEl("thanks-ring");
+        const label = cfEl("contact-countdown");
+        label.textContent = "Form returns in " + remaining + "s";
+        ring.style.strokeDashoffset = "0";
+
+        clearInterval(cfThanksTimer);
+        cfThanksTimer = setInterval(() => {
+            remaining--;
+            label.textContent = remaining > 0 ? "Form returns in " + remaining + "s" : "Bringing the form back…";
+            ring.style.strokeDashoffset = (100 * (1 - remaining / CONTACT_THANKS_SECONDS)).toFixed(1);
+            if (remaining <= 0) {
+                clearInterval(cfThanksTimer);
+                finishContactThanks();
+            }
+        }, 1000);
+    }, 450);
+}
+
+function finishContactThanks() {
+    const thanks = cfEl("contact-thankyou");
+    thanks.classList.add("is-leaving");
+    setTimeout(() => {
+        thanks.hidden = true;
+        thanks.classList.remove("is-leaving");
+        resetContactForm();
+    }, 450);
+}
+
+// Clears everything and brings a fresh, empty form back
+function resetContactForm() {
+    const form = cfEl("contact-form");
+    form.reset();
+    ["name", "email", "message"].forEach(id => {
+        cfEl("cf-" + id + "-field").classList.remove("valid", "invalid");
+        cfEl("cf-" + id + "-error").textContent = "";
+    });
+    cfTopic = CF_DEFAULT_TOPIC;
+    document.querySelectorAll(".topic-chip").forEach(c => c.classList.toggle("active", c.dataset.topic === CF_DEFAULT_TOPIC));
+    cfEl("contact-grid").dataset.accent = "hi";
+    cfSetStatus("");
+    form.hidden = false;
+    form.classList.remove("is-entering");
+    void form.offsetWidth;
+    form.classList.add("is-entering");
+    cfValidate(false);
+    cfUpdatePreview();
+    cfEl("pv-typing").classList.remove("active");
+    cfSetStep(1);
 }
 
 // ================= Timer-Powered Effects (setTimeout & setInterval) =================
